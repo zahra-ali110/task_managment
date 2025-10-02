@@ -1,0 +1,392 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
+                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+                    <div>
+                        <p><span class="font-semibold">Name:</span> {{ request.user.username }}</p>
+                        <p><span class="font-semibold">Role:</span> {{ request.user.profile.role }}</p>
+
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="dashboard.html"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3 icon"></i>
+                    Dashboard
+                </a>
+                <a href="{% url 'projects:clients' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                    Clients
+                </a>
+                <a href="{% url 'projects:projects' %}"
+                    class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                    Projects
+                </a>
+                <a href="{% url 'calendar' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3 icon"></i>
+                    Calendar
+                </a>
+
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-users mr-3 icon"></i>
+                    Users
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-envelope mr-3 icon"></i>
+                    Email
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-folder mr-3 icon"></i>
+                    File Manager
+                </a>
+            </nav>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">
+                            {% if client %}
+                            Projects for {{ client.name }}
+                            {% else %}
+                            All Projects
+                            {% endif %}
+                        </h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
+                    {% if request.user.profile.role == "manager" %}
+                    <button id="createProjectBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Project
+                    </button>
+                    {% endif %}
+
+                </div>
+
+                <!-- Project Form -->
+                <div id="projectForm"
+                    class="bg-white rounded-lg p-6 shadow-sm mb-6 {% if form.errors or editing %}{% else %} hidden {% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Project</h3>
+
+                    <form method="POST" id="newProjectForm" action="{% if editing %}
+                                  {% url 'projects:project_edit' editing.id %}
+                              {% elif client %}
+                                  {% url 'projects:projects_by_client' client.id %
+                              {% else %}
+                                  {% url 'projects:projects' %}
+                              {% endif %}" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" id="project_id" name="project_id"
+                            value="{% if editing %}{{ editing.id }}{% endif %}">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                                <input type="text" name="name" id="id_name"
+                                    value="{% if editing %}{{ editing.name }}{% endif %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" id="id_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    <option value="{{ value }}" {% if editing and value|stringformat:"s" == editing.status|stringformat:"s" %}selected{% endif %}>
+    {{ label }}
+</option>
+
+                                </select>
+
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                <input type="date" name="start_date" id="id_start_date"
+                                    value="{% if editing %}{{ editing.start_date }}{% endif %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" name="end_date" id="id_end_date"
+                                    value="{% if editing %}{{ editing.end_date }}{% endif %}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea name="description" id="id_description" rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">{% if editing %}{{ editing.description }}{% endif %}</textarea>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+                                <select name="team_members" id="id_team_members" multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    {% for member in form.fields.team_members.queryset %}
+                                    <option value="{{ member.id }}">{{
+                                        member.user.first_name|default:member.user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancelProjectBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" id="projectSubmitBtn"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                                {% if editing %}Update Project{% else %}Create Project{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Projects Container -->
+                <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% if projects %}
+                    {% for project in projects %}
+                    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex flex-col justify-between">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    {{ project.description|truncatewords:20 }}
+                                </p>
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                                                    {% if request.user.profile.role == "manager" %}
+
+                                <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editProject(this)"
+                                    data-id="{{ project.id }}" data-name="{{ project.name|escape }}"
+                                    data-status="{{ project.status }}" data-start="{{ project.start_date }}"
+                                    data-end="{{ project.end_date }}"
+                                    data-description="{{ project.description|escape }}"
+                                    data-team-ids="{% for m in project.team_members.all %}{{ m.id }}{% if not forloop.last %}|{% endif %}{% endfor %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                 {% endif %}
+
+                                <form method="POST" action="{% url 'projects:project_delete' project.id %}">
+                                    {% csrf_token %}
+                                    {% if request.user.profile.role == "manager" %}
+
+                                    <button type="submit" class="text-red-600 hover:text-red-800 p-1">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                     {% endif %}
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Status:</span>
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if project.status == 'pending' %} bg-yellow-100 text-yellow-700
+                                        {% elif project.status == 'in_progress' %} bg-blue-100 text-blue-700
+                                        {% elif project.status == 'completed' %} bg-green-100 text-green-700{% endif %}">
+                                    {{ project.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+    <span class="text-gray-600">Progress:</span>
+    <div class="flex items-center space-x-2">
+        <div class="w-20 bg-gray-200 rounded-full h-2">
+            <div class="bg-primary h-2 rounded-full transition-all duration-300"
+                 style="width: {{ progress }}%;"></div>
+        </div>
+        <span class="text-xs font-medium text-gray-700">{{ progress }}%</span>
+    </div>
+</div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Duration:</span>
+                                <span class="text-gray-700">{{ project.start_date }} - {{ project.end_date }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Team Members</span>
+                                <span class="text-xs text-gray-500">{{ project.team_members.count }} members</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                {% for member in project.team_members.all %}
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ member.user.first_name|default:member.user.username }}
+                                </span>
+                                {% empty %}
+                                <span class="text-xs text-gray-400">No members</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                            <a href="{% url 'projects:project_detail' project.id %}"
+                                class="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700">
+                                Open Project
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-gray-500">
+                        {% if client %}
+                        No projects for this client yet.
+                        {% else %}
+                        No projects available.
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+
+    <script>
+        const createBtn = document.getElementById('createProjectBtn');
+        const projectFormWrap = document.getElementById('projectForm');
+        const projectForm = document.getElementById('newProjectForm');
+        const projectIdInput = document.getElementById('project_id');
+        const submitBtn = document.getElementById('projectSubmitBtn');
+
+        if (createBtn) {
+            createBtn.addEventListener('click', () => {
+                projectFormWrap.classList.remove('hidden');
+                projectForm.reset();
+                projectIdInput.value = '';
+                const tm = document.getElementById('id_team_members');
+                if (tm) Array.from(tm.options).forEach(o => o.selected = false);
+
+                // ✅ Always set correct action (client-aware)
+                projectForm.action = "{% if client %}{% url 'projects:projects_by_client' client.id %}{% else %}{% url 'projects:projects' %}{% endif %}";
+                submitBtn.textContent = 'Create Project';
+            });
+        }
+
+        const cancelProjectBtn = document.getElementById('cancelProjectBtn');
+        if (cancelProjectBtn) {
+            cancelProjectBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                projectFormWrap.classList.add('hidden');
+            });
+        }
+
+        function editProject(btn) {
+            projectFormWrap.classList.remove('hidden');
+            document.getElementById('project_id').value = btn.dataset.id;
+            document.getElementById('id_name').value = btn.dataset.name || '';
+            document.getElementById('id_status').value = btn.dataset.status || 'pending';
+            document.getElementById('id_start_date').value = btn.dataset.start || '';
+            document.getElementById('id_end_date').value = btn.dataset.end || '';
+            document.getElementById('id_description').value = btn.dataset.description || '';
+
+            const teamSelect = document.getElementById('id_team_members');
+            const ids = (btn.dataset.teamIds || '').split('|').filter(Boolean);
+            if (teamSelect) {
+                Array.from(teamSelect.options).forEach(opt => {
+                    opt.selected = ids.includes(opt.value.toString());
+                });
+            }
+
+            // ✅ Editing always goes to edit/<id>
+            projectForm.action = `/projects/edit/${btn.dataset.id}/`;
+            submitBtn.textContent = 'Update Project';
+        }
+
+        // --- Auto-hide form after create/update success ---
+        document.addEventListener("DOMContentLoaded", function () {
+            const projectFormWrap = document.getElementById("projectForm");
+            if (projectFormWrap && !projectFormWrap.querySelector(".errorlist")) {
+                projectFormWrap.classList.add("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>

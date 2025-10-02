@@ -1,0 +1,196 @@
+from django.db import models
+from accounts.models import Profile  # using Profile instead of User
+
+
+class Client(models.Model):
+    name = models.CharField(max_length=200)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+class Project(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    )
+
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    client = models.ForeignKey(  # ✅ link each project to a client
+        Client, on_delete=models.CASCADE, related_name="projects", null=True, blank=True
+    )
+
+    created_by = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='created_projects')
+    team_members = models.ManyToManyField(Profile, related_name='projects')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    # 🔥 Progress calculation
+    def get_progress(self):
+        total_items = 0
+        completed_items = 0
+
+        for epic in self.epics.all():
+            total_items += 1
+            if epic.status == "completed":
+                completed_items += 1
+
+            for task in epic.tasks.all():
+                total_items += 1
+                if task.status == "completed":
+                    completed_items += 1
+
+                for subtask in task.subtasks.all():
+                    total_items += 1
+                    if subtask.status == "completed":
+                        completed_items += 1
+
+        if total_items == 0:
+            return 0
+
+        return int((completed_items / total_items) * 100)
+
+    # ✅ New method to auto-update status
+    def update_status(self):
+        epics = self.epics.all()
+        if not epics.exists():
+            return
+
+        if all(epic.status == "completed" for epic in epics):
+            self.status = "completed"
+        elif any(epic.status == "in_progress" for epic in epics):
+            self.status = "in_progress"
+        else:
+            self.status = "pending"
+
+        self.save(update_fields=["status"])
+
+
+class Epic(models.Model):
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    deadline = models.DateField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="medium")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    # Relations
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="epics")
+    assigned_users = models.ManyToManyField(Profile, related_name="epics", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} → {self.project.name}"
+
+    # ✅ Override save to auto-update project status
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # save epic first
+        self.project.update_status()   # then update project status
+
+class Task(models.Model):
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    deadline = models.DateField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="medium")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    # Relations
+    epic = models.ForeignKey(Epic, on_delete=models.CASCADE, related_name="tasks")
+    assigned_users = models.ManyToManyField(Profile, related_name="tasks", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} → {self.epic.title}"
+    
+
+class SubTask(models.Model):
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    deadline = models.DateField(blank=True, null=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="medium")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    estimated_time = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    time_tracked = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="subtasks")
+    assigned_users = models.ManyToManyField(Profile, related_name="subtasks", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def completed(self):
+        return self.status == "completed"
+
+    # ✅ Display estimated time in days or hours
+    @property
+    def estimated_time_display(self):
+        """Return estimated time as 'Xd' if >= 24h else 'Xh'."""
+        if self.estimated_time >= 24:
+            days = int(self.estimated_time // 24)
+            return f"{days}d"
+        return f"{int(self.estimated_time)}h"
+
+    # ✅ Display time tracked in days or hours
+    @property
+    def time_tracked_display(self):
+        """Return 'Today' if 0h, 'Xd' if >= 24h else 'Xh'."""
+        if self.time_tracked == 0:
+            return "Today"
+        elif self.time_tracked >= 24:
+            days = int(self.time_tracked // 24)
+            return f"{days}d"
+        return f"{int(self.time_tracked)}h"
+
+    def __str__(self):
+        return f"{self.title} → {self.task.title}"

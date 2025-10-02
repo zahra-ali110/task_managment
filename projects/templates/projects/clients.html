@@ -1,0 +1,252 @@
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clients - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
+                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+                    <div>
+                        <p><span class="font-semibold">Name:</span> {{ request.user.username }}</p>
+                        <p><span class="font-semibold">Role:</span> {{ request.user.profile.role }}</p>
+
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="dashboard.html"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3 icon"></i>
+                    Dashboard
+                </a>
+                <a href="{% url 'projects:clients' %}"
+                    class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                    Clients
+                </a>
+                <a href="{% url 'projects:projects' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                    Projects
+                </a>
+                <a href="{% url 'calendar' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3 icon"></i>
+                    Calendar
+                </a>
+
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-users mr-3 icon"></i>
+                    Users
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-envelope mr-3 icon"></i>
+                    Email
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-folder mr-3 icon"></i>
+                    File Manager
+                </a>
+            </nav>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-semibold text-gray-900">Clients</h1>
+                </div>
+            </header>
+
+            <!-- Clients Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Client Management</h2>
+                    {% if request.user.profile.role == "manager" %}
+                    <button id="createClientBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Client
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Client Form -->
+                <div id="clientFormContainer"
+                    class="{% if editing %}block{% else %}hidden{% endif %} mb-6 bg-white shadow rounded-lg p-6 border border-gray-200">
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        {% if editing %}
+                        <input type="hidden" name="client_id" id="client_id" value="{{ editing.id }}">
+                        {% endif %}
+
+                        {{ form.non_field_errors }}
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
+                            {{ form.name|add_class:"w-full border rounded-lg px-3 py-2" }}
+                            {% for error in form.name.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Address</label>
+                            {{ form.address|add_class:"w-full border rounded-lg px-3 py-2" }}
+                            {% for error in form.address.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            {{ form.email|add_class:"w-full border rounded-lg px-3 py-2" }}
+                            {% for error in form.email.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                            {{ form.phone|add_class:"w-full border rounded-lg px-3 py-2" }}
+                            {% for error in form.phone.errors %}
+                            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary">
+                            {% if editing %}Update Client{% else %}Create Client{% endif %}
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Clients Grid -->
+                <div id="clientsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for client in clients %}
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <!-- Client Info -->
+                        <div class="flex items-center mb-4">
+                            <div
+                                class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                {{ client.name|slice:":1"|upper }}
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ client.name }}</h3>
+                                <p class="text-sm text-gray-500">{{ client.address }}</p>
+                            </div>
+                        </div>
+                        <!-- ✅ email & phone safe render -->
+                       {% if client.email %}
+<p class="text-sm text-gray-600 mb-2">
+  <i class="fas fa-envelope mr-2 text-primary"></i>{{ client.email }}
+</p>
+{% endif %}
+
+{% if client.phone %}
+<p class="text-sm text-gray-600 mb-4">
+  <i class="fas fa-phone mr-2 text-primary"></i>{{ client.phone }}
+</p>
+{% endif %}
+
+                        <!-- Related Projects -->
+                        <div class="mb-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-2">Projects:</h4>
+                            {% if client.projects.all %}
+                            <ul class="space-y-1">
+                                {% for project in client.projects.all %}
+                                <li class="text-sm text-gray-700 flex items-center">
+                                    <i class="fas fa-folder mr-2 text-accent"></i>
+                                    <a href="{% url 'projects:project_detail' project.id %}" class="hover:underline">
+                                        {{ project.name }}
+                                    </a>
+                                </li>
+                                {% empty %}
+                                <li class="text-sm text-gray-500">No projects yet.</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-sm text-gray-500">No projects yet.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-2">
+                            <a href="{% url 'projects:projects_by_client' client.id %}"
+                                class="flex-1 bg-primary text-white px-3 py-2 rounded-lg text-center hover:bg-secondary">
+                                View Projects
+                            </a>
+                            <form method="post" action="{% url 'projects:client_delete' client.id %}"
+                                onsubmit="return confirm('Are you sure you want to delete this client?');">
+                                {% csrf_token %}
+
+                                {% if request.user.profile.role == "manager" %}
+
+                                <button type="submit"
+                                    class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600">Delete</button>
+                                {% endif %}
+
+                            </form>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No clients found.</p>
+                    {% endfor %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Script to toggle form -->
+    <script>
+        const createBtn = document.getElementById("createClientBtn");
+        const formContainer = document.getElementById("clientFormContainer");
+        if (createBtn) {
+            createBtn.addEventListener("click", () => {
+                formContainer.classList.toggle("hidden");
+            });
+        }
+    </script>
+</body>
+
+</html>

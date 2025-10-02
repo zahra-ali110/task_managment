@@ -1,0 +1,2447 @@
+<div id="projectForm" class="bg-white rounded-lg p-6 shadow-sm mb-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Create New Project</h3>
+                    <form method="POST" class="space-y-4">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancelProjectBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+                <!-- Projects Container -->
+                <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for project in projects %}
+                    <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ project.description|truncatewords:20 }}</p>
+                        <span class="inline-block px-3 py-1 text-sm rounded-full 
+                            {% if project.status == 'Planned' %}bg-yellow-100 text-yellow-700
+                            {% elif project.status == 'Ongoing' %}bg-blue-100 text-blue-700
+                            {% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ project.status }}
+                        </span>
+                        <p class="text-sm text-gray-500 mt-2">Start: {{ project.start_date }} | End: {{ project.end_date }}</p>
+                        <div class="mt-3">
+                            <p class="text-sm font-medium text-gray-700">Team Members:</p>
+                            <ul class="flex flex-wrap gap-2 mt-1">
+                                {% for member in project.team_members.all %}
+                                <li class="bg-gray-100 px-2 py-1 rounded text-xs">{{ member.user.first_name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No projects available.</p>
+                    {% endfor %}
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                {% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4">
+                    <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-medium">{{ request.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-400">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href=" " class="flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Projects
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>
+                    Calendar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Projects</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
+                    <button id="createProjectBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Project
+                    </button>
+                </div>
+
+                <!-- Project Creation Form -->
+                <div id="projectForm" class="bg-white rounded-lg p-6 shadow-sm mb-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Create New Project</h3>
+                    <form method="POST" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <!-- Project Name -->
+                            <div>
+                                <label for="{{ form.name.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.name.label }}
+                                </label>
+                                {{ form.name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label for="{{ form.status.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.status.label }}
+                                </label>
+                                {{ form.status|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+
+                            <!-- Start Date -->
+                            <div>
+                                <label for="{{ form.start_date.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.start_date.label }}
+                                </label>
+                                {{ form.start_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+
+                            <!-- End Date -->
+                            <div>
+                                <label for="{{ form.end_date.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.end_date.label }}
+                                </label>
+                                {{ form.end_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+
+                            <!-- Description -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.description.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.description.label }}
+                                </label>
+                                {{ form.description|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+
+                            <!-- Team Members -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.team_members.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.team_members.label }}
+                                </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                    {% for checkbox in form.team_members %}
+                                    <label class="flex items-center space-x-2">
+                                        {{ checkbox.tag }}
+                                        <span class="text-sm text-gray-700">{{ checkbox.choice_label }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancelProjectBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+                <!-- Projects Container -->
+<!-- Projects Container -->
+<div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for project in projects %}
+    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex flex-col justify-between">
+        
+        <!-- Header with title + actions -->
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ project.description|truncatewords:20 }}</p>
+            </div>
+            <div class="flex space-x-2 ml-4">
+                <!-- Edit link -->
+                <a href="{% url 'projects:project_edit' project.id %}" 
+                   class="text-blue-600 hover:text-blue-800 p-1" 
+                   title="Edit Project">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <!-- Delete link -->
+                <a href="{% url 'projects:project_delete' project.id %}" 
+                   class="text-red-600 hover:text-red-800 p-1" 
+                   title="Delete Project"
+                   onclick="return confirm('Are you sure you want to delete this project?');">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Status, Progress, Dates -->
+        <div class="space-y-3 mb-4">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Status:</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if project.status == 'Planned' %} bg-yellow-100 text-yellow-700
+                    {% elif project.status == 'Ongoing' %} bg-blue-100 text-blue-700
+                    {% else %} bg-green-100 text-green-700 {% endif %}">
+                    {{ project.status }}
+                </span>
+            </div>
+
+            <!-- Placeholder progress bar -->
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Progress:</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 rounded-full h-2">
+                        <div class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 50%"></div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700">50%</span>
+                </div>
+            </div>
+
+            <!-- Dates -->
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Duration:</span>
+                <span class="text-gray-700">{{ project.start_date }} - {{ project.end_date }}</span>
+            </div>
+
+            <!-- Days Remaining (placeholder for now) -->
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Days remaining:</span>
+                <span class="font-medium text-gray-700">--</span>
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Team Members</span>
+                <span class="text-xs text-gray-500">{{ project.team_members.count }} members</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+                {% for member in project.team_members.all %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    {{ member.user.first_name }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    {% empty %}
+    <p class="text-gray-500">No projects available.</p>
+    {% endfor %}
+</div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300"></div>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script>
+        // Toggle Project Form
+        document.getElementById('createProjectBtn').addEventListener('click', () => {
+            document.getElementById('projectForm').classList.remove('hidden');
+        });
+        document.getElementById('cancelProjectBtn').addEventListener('click', () => {
+            document.getElementById('projectForm').classList.add('hidden');
+        });
+    </script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4">
+                    <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-medium">{{ request.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-400">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href=" " class="flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Projects
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>
+                    Calendar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Projects</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
+                    <button id="createProjectBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Project
+                    </button>
+
+                </div>
+
+
+                <!-- Project Form (hidden by default, shows if form has errors) -->
+                <div id="projectForm"
+                    class="bg-white rounded-lg p-6 shadow-sm mb-6 {% if form.errors %} {% else %} hidden {% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Create New Project</h3>
+                    <form method="POST" id="newProjectForm" class="space-y-4">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                                {{ form.name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                {{ form.status|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                {{ form.start_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                {{ form.end_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                {{ form.description|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+                                {{ form.team_members|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg
+                                focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" }}
+                                <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="reset" id="cancelProjectBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+
+
+
+                <!-- Projects Container -->
+                <!-- Projects Container -->
+                <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for project in projects %}
+                    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex flex-col justify-between">
+
+                        <!-- Header with title + actions -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    {{project.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                <button class="text-blue-600 hover:text-blue-800 p-1">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteProjectCard(this)" class="text-red-600 hover:text-red-800 p-1">
+    <i class="fas fa-trash"></i>
+</button>
+
+                            </div>
+                        </div>
+
+                        <!-- Status, Progress, Dates -->
+                        <div class="space-y-3 mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if project.status == 'Planned' %} bg-yellow-100 text-yellow-700
+                    {% elif project.status == 'Ongoing' %} bg-blue-100 text-blue-700
+                    {% else %} bg-green-100 text-green-700 {% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </div>
+
+                            <!-- Placeholder progress bar -->
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Progress:</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full transition-all duration-300"
+                                            style="width: 50%"></div>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700">50%</span>
+                                </div>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Duration:</span>
+                                <span class="text-gray-700">{{ project.start_date }} - {{ project.end_date }}</span>
+                            </div>
+
+                            <!-- Days Remaining (placeholder calculation, backend can provide later) -->
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Days remaining:</span>
+                                <span class="font-medium text-gray-700">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Team Members -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Team Members</span>
+                                <span class="text-xs text-gray-500">{{ project.team_members.count }} members</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                {% for member in project.team_members.all %}
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ member.user.first_name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Footer actions -->
+                        <!-- Footer actions -->
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                            <button
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors text-sm font-medium">
+                                <i class="fas fa-external-link-alt mr-2"></i>Open
+                            </button>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="px-3 py-2 border border-gray-300 rounded-lg text-primary hover:text-secondary hover:bg-gray-50 transition-colors text-sm">
+                                    <i class="fas fa-plus mr-1"></i>Add Parent Task
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No projects available.</p>
+                    {% endfor %}
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300"></div>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script>
+        // Toggle Project Form
+        document.getElementById('createProjectBtn').addEventListener('click', () => {
+            document.getElementById('projectForm').classList.remove('hidden');
+        });
+        document.getElementById('cancelProjectBtn').addEventListener('click', () => {
+            document.getElementById('projectForm').classList.add('hidden');
+        });
+    </script>
+    <script>
+function deleteProjectCard(button) {
+    // Find the closest parent card div
+    const projectCard = button.closest('.bg-white.rounded-lg.shadow-md');
+    if (projectCard) {
+        projectCard.remove(); // Remove the card from the DOM
+    }
+}
+</script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4">
+                    <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-medium">{{ request.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-400">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href=" " class="flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Projects
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>
+                    Calendar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Projects</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
+                    <button id="createProjectBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Project
+                    </button>
+                </div>
+                <!-- Project Form -->
+                <div id="projectForm"
+                    class="bg-white rounded-lg p-6 shadow-sm mb-6 {% if form.errors %} {% else %} hidden {% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Project</h3>
+                    <form method="POST" id="newProjectForm" class="space-y-4">
+                        {% csrf_token %}
+                        <!-- Hidden input to store project ID for updates -->
+                        <input type="hidden" id="project_id" name="project_id" value="">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Project Title -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                                <input type="text" name="name" id="id_name"
+                                    value="{{ form.name.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" id="id_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="pending" {% if form.status.value=="pending" %}selected{% endif %}>
+                                        Pending</option>
+                                    <option value="in_progress" {% if form.status.value=="in_progress" %}selected{%
+                                        endif %}>In Progress</option>
+                                    <option value="completed" {% if form.status.value=="completed" %}selected{% endif
+                                        %}>Completed</option>
+                                </select>
+                            </div>
+
+                            <!-- Start Date -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                <input type="date" name="start_date" id="id_start_date"
+                                    value="{{ form.start_date.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- End Date -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" name="end_date" id="id_end_date"
+                                    value="{{ form.end_date.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- Description -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea name="description" id="id_description"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">{{ form.description.value|default_if_none:'' }}</textarea>
+                            </div>
+
+                            <!-- Team Members -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+                                <select name="team_members" id="id_team_members" multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    {% for member in form.fields.team_members.queryset %}
+                                    <option value="{{ member.id }}" {% if member.id|stringformat:"s" in
+                                        form.team_members.value|stringformat:"s" %}selected{% endif %}>
+                                        {{ member.user.first_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancelProjectBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" id="projectSubmitBtn"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+
+                <!-- Projects Container -->
+                <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for project in projects %}
+                    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex flex-col justify-between">
+
+                        <!-- Header with title + actions -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    {{project.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editProject(this)"
+                                    data-id="{{ project.id }}" data-name="{{ project.name }}"
+                                    data-status="{{ project.status }}" data-start="{{ project.start_date }}"
+                                    data-end="{{ project.end_date }}" data-description="{{ project.description }}"
+                                    data-team="{% for m in project.team_members.all %}{{ m.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteProjectCard(this)" class="text-red-600 hover:text-red-800 p-1">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status, Progress, Dates -->
+                        <div class="space-y-3 mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if project.status == 'Planned' %} bg-yellow-100 text-yellow-700
+                    {% elif project.status == 'Ongoing' %} bg-blue-100 text-blue-700
+                    {% else %} bg-green-100 text-green-700 {% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Progress:</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full transition-all duration-300"
+                                            style="width: 50%"></div>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700">50%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Duration:</span>
+                                <span class="text-gray-700">{{ project.start_date }} - {{ project.end_date }}</span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Days remaining:</span>
+                                <span class="font-medium text-gray-700">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Team Members -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Team Members</span>
+                                <span class="text-xs text-gray-500">{{ project.team_members.count }} members</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                {% for member in project.team_members.all %}
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ member.user.first_name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Footer actions -->
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                            <button
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors text-sm font-medium">
+                                <i class="fas fa-external-link-alt mr-2"></i>Open
+                            </button>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="px-3 py-2 border border-gray-300 rounded-lg text-primary hover:text-secondary hover:bg-gray-50 transition-colors text-sm">
+                                    <i class="fas fa-plus mr-1"></i>Add Parent Task
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No projects available.</p>
+                    {% endfor %}
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300"></div>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script>
+        // Open form in create mode
+        document.getElementById('createProjectBtn').addEventListener('click', () => {
+            const form = document.getElementById('projectForm');
+            const newForm = document.getElementById('newProjectForm');
+
+            form.classList.remove('hidden');
+            newForm.reset();
+            document.getElementById('project_id').value = '';
+
+            // Set action to create
+            newForm.action = "{% url 'projects:projects' %}";
+            document.getElementById('projectSubmitBtn').innerText = 'Create Project';
+        });
+
+        // Cancel button
+        document.getElementById('cancelProjectBtn').addEventListener('click', (e) => {
+            e.preventDefault(); // prevent default reset
+            document.getElementById('projectForm').classList.add('hidden');
+        });
+
+        // Edit Project
+        function editProject(button) {
+            const form = document.getElementById('projectForm');
+            const newForm = document.getElementById('newProjectForm');
+            form.classList.remove('hidden');
+
+            document.getElementById('project_id').value = button.dataset.id;
+            document.getElementById('id_name').value = button.dataset.name;
+            document.getElementById('id_status').value = button.dataset.status;
+            document.getElementById('id_start_date').value = button.dataset.start;
+            document.getElementById('id_end_date').value = button.dataset.end;
+            document.getElementById('id_description').value = button.dataset.description;
+
+            // Team members
+            const teamSelect = document.getElementById('id_team_members');
+            if (teamSelect) {
+                const selected = button.dataset.team ? button.dataset.team.split(',') : [];
+                Array.from(teamSelect.options).forEach(option => {
+                    option.selected = selected.includes(option.value.toString());
+                });
+            }
+
+            // Update submit button text
+            document.getElementById('projectSubmitBtn').innerText = 'Update Project';
+
+            // Set action to edit URL
+            newForm.action = `/projects/edit/${button.dataset.id}/`;
+        }
+
+    </script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4">
+                    <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-medium">{{ request.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-400">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href=" " class="flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Projects
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>
+                    Calendar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Projects</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+
+        <!-- Project Details Card -->
+        <div class="bg-white rounded-xl shadow p-6 mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">🚀 {{ project.name }}</h2>
+          <p class="text-gray-600 mb-4">{{ project.description }}</p>
+
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <p><span class="font-semibold text-gray-700">Start Date:</span> {{ project.start_date }}</p>
+            <p><span class="font-semibold text-gray-700">End Date:</span> {{ project.end_date }}</p>
+            <p><span class="font-semibold text-gray-700">Status:</span>
+              <span class="text-green-600 font-semibold">{{ project.get_status_display }}</span>
+            </p>
+            <p><span class="font-semibold text-gray-700">Members:</span>
+              {% for member in project.team_members.all %}
+              {{ member.user.first_name }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+              No members
+              {% endfor %}
+            </p>
+          </div>
+        </div>
+
+        <!-- Epics -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">📌 Epic Tasks</h3>
+
+            <!-- Open a form to add an epic on this page (optional) -->
+            <button id="toggleEpicFormBtn" class="bg-primary text-white px-3 py-1 rounded">+ Add Epic</button>
+          </div>
+
+          <!-- Add Epic Form (hidden by default, toggled by the button) -->
+          <div id="epicInlineForm" class="bg-white rounded-lg p-4 shadow mb-6 hidden">
+            <form method="post" action="{% url 'projects:epic_create' %}">
+              {% csrf_token %}
+              <input type="hidden" name="project" value="{{ project.id }}">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input name="title" placeholder="Epic title" class="px-3 py-2 border rounded" required>
+                <input type="date" name="deadline" class="px-3 py-2 border rounded">
+                <select name="priority" class="px-3 py-2 border rounded">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+                <select name="status" class="px-3 py-2 border rounded">
+                  <option value="pending" selected>Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <textarea name="description" class="md:col-span-2 px-3 py-2 border rounded"
+                  placeholder="Description"></textarea>
+                <select name="assigned_users" multiple class="md:col-span-2 px-3 py-2 border rounded">
+                  {% for member in project.team_members.all %}
+                  <option value="{{ member.id }}">{{ member.user.first_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mt-3 text-right">
+                <button type="button" id="cancelInlineEpic" class="px-3 py-1 border rounded mr-2">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white rounded">Add Epic</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Epics list -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for epic in epics %}
+            <div class="bg-white rounded-xl shadow p-5 hover:shadow-lg transition">
+              <h4 class="text-lg font-bold text-primary mb-2">{{ epic.title }}</h4>
+              <p class="text-gray-600 text-sm mb-3">{{ epic.description|default:"No description" }}</p>
+              <div class="flex justify-between text-sm text-gray-700">
+                <p><span class="font-semibold">Deadline:</span> {{ epic.deadline|default:"—" }}</p>
+                <p><span class="font-semibold">Priority:</span> {{ epic.get_priority_display }}</p>
+              </div>
+              <p class="mt-2"><span class="font-semibold">Assigned:</span>
+                {% for u in epic.assigned_users.all %}{{ u.user.first_name }}{% if not forloop.last %}, {% endif %}{%
+                empty %}Nobody{% endfor %}
+              </p>
+              <p class="mt-2"><span class="font-semibold">Status:</span>
+                <span
+                  class="{% if epic.status == 'in_progress' %}text-yellow-600{% elif epic.status == 'completed' %}text-green-600{% else %}text-gray-600{% endif %} font-semibold">
+                  {{ epic.get_status_display }}
+                </span>
+              </p>
+              <!-- optional view/edit buttons -->
+            </div>
+            {% empty %}
+            <p class="text-gray-500">No epics yet for this project.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Optional JS to toggle inline epic form -->
+  <script>
+    document.getElementById('toggleEpicFormBtn').addEventListener('click', function () {
+      document.getElementById('epicInlineForm').classList.toggle('hidden');
+    });
+    document.getElementById('cancelInlineEpic').addEventListener('click', function () {
+      document.getElementById('epicInlineForm').classList.add('hidden');
+    });
+  </script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% load static %}
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4">
+                    <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-10 h-10 rounded-full mr-3">
+                    <div>
+                        <p class="font-medium">{{ request.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-400">{{ request.user.username }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="{% url 'dashboard' %}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3"></i>
+                    Tasks
+                </a>
+                <a href=" " class="flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-project-diagram mr-3"></i>
+                    Projects
+                </a>
+                <a href=" "
+                    class="flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>
+                    Calendar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Projects</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search projects..."
+                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center">
+                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
+                    <button id="createProjectBtn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create New Project
+                    </button>
+                </div>
+                <!-- Project Form -->
+                <div id="projectForm"
+                    class="bg-white rounded-lg p-6 shadow-sm mb-6 {% if form.errors %} {% else %} hidden {% endif %}">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Project</h3>
+                    <form method="POST" id="newProjectForm" class="space-y-4">
+                        {% csrf_token %}
+                        <!-- Hidden input to store project ID for updates -->
+                        <input type="hidden" id="project_id" name="project_id" value="">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Project Title -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+                                <input type="text" name="name" id="id_name"
+                                    value="{{ form.name.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" id="id_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+
+                                    <select name="status" id="id_status"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        {% for value, label in form.fields.status.choices %}
+                                        {% ifequal value form.initial.status %}
+                                        <option value="{{ value }}" selected>{{ label }}</option>
+                                        {% else %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                        {% endifequal %}
+                                        {% endfor %}
+                                    </select>
+
+
+                                </select>
+
+
+                            </div>
+
+                            <!-- Start Date -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                                <input type="date" name="start_date" id="id_start_date"
+                                    value="{{ form.start_date.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- End Date -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                                <input type="date" name="end_date" id="id_end_date"
+                                    value="{{ form.end_date.value|default_if_none:'' }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <!-- Description -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea name="description" id="id_description"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">{{ form.description.value|default_if_none:'' }}</textarea>
+                            </div>
+
+                            <!-- Team Members -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+                                <select name="team_members" id="id_team_members" multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+
+                                    {% for member in form.fields.team_members.queryset %}
+                                    {% if form.team_members.value %}
+                                    {% if member.id|stringformat:"s" in form.team_members.value %}
+                                    <option value="{{ member.id }}" selected>{{ member.user.first_name }}</option>
+                                    {% else %}
+                                    <option value="{{ member.id }}">{{ member.user.first_name }}</option>
+                                    {% endif %}
+                                    {% else %}
+                                    <option value="{{ member.id }}">{{ member.user.first_name }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </select>
+
+
+                                <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancelProjectBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" id="projectSubmitBtn"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                Create Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Epic Form (Hidden by default) -->
+                <div id="epicForm" class="bg-white rounded-lg p-6 shadow-sm mb-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Task</h3>
+                    <form method="POST" action="{% url 'projects:epic_create' project.id %}" id="newEpicForm"
+                        class="space-y-4">
+                        {% csrf_token %}
+                        <!-- Hidden input to attach epic to project -->
+                        <input type="hidden" id="epic_project_id" name="project">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Title -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                                <input type="text" name="title" id="id_title"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <!-- Deadline -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Deadline</label>
+                                <input type="date" name="deadline" id="id_deadline"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                            </div>
+
+                            <!-- Priority -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                                <select name="priority" id="id_priority"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" id="id_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea name="description" id="id_description"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"></textarea>
+                            </div>
+
+                            <!-- Assigned Users -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Assigned Users</label>
+                                <select name="assigned_users" id="id_assigned_users" multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                                    {% for member in request.user.profile.projects.first.team_members.all %}
+                                    <option value="{{ member.id }}">{{ member.user.first_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="reset" id="cancelEpicBtn"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary">
+                                Add Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+
+
+                <!-- Projects Container -->
+                <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for project in projects %}
+                    <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex flex-col justify-between">
+
+                        <!-- Header with title + actions -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                                    {{project.description|truncatewords:20 }}</p>
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                <button class="text-blue-600 hover:text-blue-800 p-1" onclick="editProject(this)"
+                                    data-id="{{ project.id }}" data-name="{{ project.name }}"
+                                    data-status="{{ project.status }}" data-start="{{ project.start_date }}"
+                                    data-end="{{ project.end_date }}" data-description="{{ project.description }}"
+                                    data-team="{% for m in project.team_members.all %}{{ m.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteProjectCard(this)" class="text-red-600 hover:text-red-800 p-1">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status, Progress, Dates -->
+                        <div class="space-y-3 mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                    {% if project.status == 'Planned' %} bg-yellow-100 text-yellow-700
+                    {% elif project.status == 'Ongoing' %} bg-blue-100 text-blue-700
+                    {% else %} bg-green-100 text-green-700 {% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Progress:</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full transition-all duration-300"
+                                            style="width: 50%"></div>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700">50%</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Duration:</span>
+                                <span class="text-gray-700">{{ project.start_date }} - {{ project.end_date }}</span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Days remaining:</span>
+                                <span class="font-medium text-gray-700">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Team Members -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-700">Team Members</span>
+                                <span class="text-xs text-gray-500">{{ project.team_members.count }} members</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                {% for member in project.team_members.all %}
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ member.user.first_name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Footer actions -->
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                            <a href="{% url 'projects:project_detail' project.id %}"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors text-sm font-medium inline-flex items-center">
+                                <i class="fas fa-external-link-alt mr-2"></i>Open
+                            </a>
+
+
+                            <div class="flex space-x-2">
+                                <button class="text-primary font-medium openEpicFormBtn"
+                                    data-project-id="{{ project.id }}">
+                                    + Add New Task
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500">No projects available.</p>
+                    {% endfor %}
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300"></div>
+
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script>
+        // Open form in create mode
+        document.getElementById('createProjectBtn').addEventListener('click', () => {
+            const form = document.getElementById('projectForm');
+            const newForm = document.getElementById('newProjectForm');
+
+            form.classList.remove('hidden');
+            newForm.reset();
+            document.getElementById('project_id').value = '';
+
+            // Set action to create
+            newForm.action = "{% url 'projects:projects' %}";
+            document.getElementById('projectSubmitBtn').innerText = 'Create Project';
+        });
+
+        // Cancel button
+        document.getElementById('cancelProjectBtn').addEventListener('click', (e) => {
+            e.preventDefault(); // prevent default reset
+            document.getElementById('projectForm').classList.add('hidden');
+        });
+
+        // Edit Project
+        function editProject(button) {
+            const form = document.getElementById('projectForm');
+            const newForm = document.getElementById('newProjectForm');
+            form.classList.remove('hidden');
+
+            document.getElementById('project_id').value = button.dataset.id;
+            document.getElementById('id_name').value = button.dataset.name;
+            document.getElementById('id_status').value = button.dataset.status;
+            document.getElementById('id_start_date').value = button.dataset.start;
+            document.getElementById('id_end_date').value = button.dataset.end;
+            document.getElementById('id_description').value = button.dataset.description;
+
+            // Team members
+            const teamSelect = document.getElementById('id_team_members');
+            if (teamSelect) {
+                const selected = button.dataset.team ? button.dataset.team.split(',') : [];
+                Array.from(teamSelect.options).forEach(option => {
+                    option.selected = selected.includes(option.value.toString());
+                });
+            }
+
+            // Update submit button text
+            document.getElementById('projectSubmitBtn').innerText = 'Update Project';
+
+            // Set action to edit URL
+            newForm.action = `/projects/edit/${button.dataset.id}/`;
+        }
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const epicForm = document.getElementById("epicForm");
+            const projectForm = document.getElementById("projectForm");
+            const openEpicBtns = document.querySelectorAll(".openEpicFormBtn");
+            const cancelEpicBtn = document.getElementById("cancelEpicBtn");
+            const epicProjectInput = document.getElementById("epic_project_id");
+
+            openEpicBtns.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    projectForm.classList.add("hidden");  // hide project form
+                    epicForm.classList.remove("hidden"); // show epic form
+                    epicProjectInput.value = this.dataset.projectId; // set project ID
+                });
+            });
+
+            cancelEpicBtn.addEventListener("click", function () {
+                epicForm.classList.add("hidden");
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+//Dashboard
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Added custom CSS file for professional styling -->
+    <link href="css/styles.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#06b6d4',
+                        dark: '#1f2937',
+                        'dark-light': '#374151'
+                    }
+                }
+            }
+        }
+    </script>
+
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+         <!-- Sidebar -->
+        <div id="sidebar"
+            class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+            <div class="flex items-center mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
+                    <i class="fas fa-tasks text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Adminto</h1>
+            </div>
+
+            <div class="mb-8">
+                <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
+                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+                    <div>
+                        <p><span class="font-semibold">Name:</span> {{ name }}</p>
+                        <p><span class="font-semibold">Role:</span> {{ role }}</p>
+
+                    </div>
+                </div>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="dashboard.html"
+                    class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+                    <i class="fas fa-tachometer-alt mr-3 icon"></i>
+                    Dashboard
+                </a>
+                <a href="{% url 'projects:projects' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-tasks mr-3 icon"></i>
+                    Tasks
+                </a>
+                <a href="{% url 'projects:projects' %}"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                    Projects
+                </a>
+                <a href="calendar.html"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-3 icon"></i>
+                    Calendar
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-users mr-3 icon"></i>
+                    Users
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-envelope mr-3 icon"></i>
+                    Email
+                </a>
+                <a href="#"
+                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+                    <i class="fas fa-folder mr-3 icon"></i>
+                    File Manager
+                </a>
+            </nav>
+
+        </div>
+
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button id="sidebar-toggle"
+                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors hover-scale">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search something..."
+                                class="search-input bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                            <i class="search-icon fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="text-gray-500 hover:text-gray-700 hover-scale">
+                            <i class="fas fa-bell text-xl"></i>
+                        </button>
+                        <div class="flex items-center hover-lift cursor-pointer p-2 rounded-lg">
+                            <img src="public/thoughtful-man.png" alt="User" class="w-8 h-8 rounded-full">
+                            <span class="text-sm font-medium text-gray-700">{{ name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <!-- Stats Cards -->
+                <div id="dashboardView">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+                        <!-- Total Orders Card -->
+                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
+                            <div class="card-body">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                                        <p class="text-2xl font-bold text-gray-900">687.3k</p>
+                                        <p class="text-sm text-gray-500">Since last month</p>
+                                    </div>
+                                    <div class="w-16 h-16">
+                                        <canvas id="ordersChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span class="status-badge bg-red-100 text-red-800">
+                                        -2.1%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Revenue Card -->
+                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
+                            <div class="card-body">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                                        <p class="text-2xl font-bold text-gray-900">$5.42M</p>
+                                        <p class="text-sm text-gray-500">Since last month</p>
+                                    </div>
+                                    <div class="w-16 h-16">
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span class="status-badge bg-green-100 text-green-800">
+                                        +8.2%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Users Card -->
+                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
+                            <div class="card-body">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">New Users</p>
+                                        <p class="text-2xl font-bold text-gray-900">45.3k</p>
+                                        <p class="text-sm text-gray-500">Since last month</p>
+                                    </div>
+                                    <div class="w-16 h-16">
+                                        <canvas id="usersChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span class="status-badge bg-yellow-100 text-yellow-800">
+                                        +1.2%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Satisfaction Card -->
+                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
+                            <div class="card-body">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-600">Customer Satisfaction</p>
+                                        <p class="text-2xl font-bold text-gray-900">94.3%</p>
+                                        <p class="text-sm text-gray-500">Since last month</p>
+                                    </div>
+                                    <div class="w-16 h-16">
+                                        <canvas id="satisfactionChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span class="status-badge bg-blue-100 text-blue-800">
+                                        +3.1%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 justify-center">
+
+                    <!-- Orders Statistics Card -->
+                    <div class="card hover-lift max-w-md w-full mx-auto bg-white rounded-xl shadow p-4">
+                        <div class="card-header">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Orders Statistics</h3>
+                                <button class="text-gray-400 hover:text-gray-600 hover-scale">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="h-64 flex items-center justify-center">
+                                <canvas id="ordersDonutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Card -->
+                    <div class="card hover-lift max-w-md w-full mx-auto bg-white rounded-xl shadow p-4">
+                        <div class="card-header">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Statistics</h3>
+                                <button class="text-gray-400 hover:text-gray-600 hover-scale">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="h-64 flex items-center justify-center">
+                                <canvas id="statisticsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+                <!-- Team Members -->
+                <div class="card hover-lift mb-8">
+                    <div class="card-header">
+                        <h3 class="text-lg font-semibold text-gray-900">Team Members</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+
+                            <!-- John -->
+                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
+                                <img src="public/thoughtful-man.png" alt="John Smith"
+                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
+                                <h4 class="font-medium text-gray-900">John Smith</h4>
+                                <p class="text-sm text-gray-500">Project Manager</p>
+                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">80+ Feedbacks →
+                                </p>
+                            </div>
+
+                            <!-- Jane -->
+                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
+                                <img src="public/diverse-woman-portrait.png" alt="Jane Doe"
+                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
+                                <h4 class="font-medium text-gray-900">Jane Doe</h4>
+                                <p class="text-sm text-gray-500">UI/UX Manager</p>
+                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">90+ Feedbacks →
+                                </p>
+                            </div>
+
+                            <!-- Emily -->
+                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
+                                <img src="public/diverse-group-friends.png" alt="Emily Brown"
+                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
+                                <h4 class="font-medium text-gray-900">Emily Brown</h4>
+                                <p class="text-sm text-gray-500">Software Engineer</p>
+                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">100+ Feedbacks
+                                    →</p>
+                            </div>
+
+                            <!-- Mark -->
+                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
+                                <img src="public/diverse-group-women.png" alt="Mark Wilson"
+                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
+                                <h4 class="font-medium text-gray-900">Mark Wilson</h4>
+                                <p class="text-sm text-gray-500">Marketing Specialist</p>
+                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">70+ Feedbacks →
+                                </p>
+                            </div>
+
+                            <!-- Sara -->
+                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
+                                <img src="public/thoughtful-man.png" alt="Sara Johnson"
+                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
+                                <h4 class="font-medium text-gray-900">Sara Johnson</h4>
+                                <p class="text-sm text-gray-500">Data Analyst</p>
+                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">50+ Feedbacks →
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Brand Listing -->
+                <div class="card hover-lift bg-white rounded-xl shadow-md">
+                    <div class="card-header">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Brand Listing</h3>
+                            <button class="btn btn-ghost text-primary hover:text-secondary font-medium">
+                                Add Brand +
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Brand</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Since</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Products</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr class="table-row">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 hover-scale">
+                                                    <span class="text-white font-bold text-sm">T</span>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">TechNova - Germany
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Since 2015</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,200</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15,350</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="status-badge status-completed">Active</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-600 hover-scale">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="table-row">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3 hover-scale">
+                                                    <span class="text-white font-bold text-sm">D</span>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">DevLux - France</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Since 2000</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">450</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">6,800</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="status-badge status-planned">Pending</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-gray-400 hover:text-gray-600 hover-scale">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay"
+        class="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300">
+    </div>
+    <script>
+        // Orders Donut Chart
+        const ordersCtx = document.getElementById('ordersDonutChart').getContext('2d');
+        new Chart(ordersCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending', 'Cancelled'],
+                datasets: [{
+                    data: [65, 20, 15],
+                    backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Line Chart for Statistics
+        const statsCtx = document.getElementById('statisticsChart').getContext('2d');
+        new Chart(statsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Users',
+                    data: [10, 25, 30, 40, 35, 50],
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                    }
+                }
+            }
+        });
+    </script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>

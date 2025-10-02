@@ -1,0 +1,994 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ project.name }} - TaskFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#1e40af',
+            accent: '#06b6d4',
+            dark: '#1f2937',
+            'dark-light': '#374151'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-gray-50">
+  <div class="flex h-screen">
+
+    <!-- Sidebar -->
+    <div id="sidebar"
+      class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+      <div class="flex items-center mb-8">
+        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
+          <i class="fas fa-tasks text-white"></i>
+        </div>
+        <h1 class="text-xl font-bold">Adminto</h1>
+      </div>
+
+      <div class="mb-8">
+        <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
+          <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+          <div>
+            <p><span class="font-semibold">Name:</span> {{ request.user.username }}</p>
+            <p><span class="font-semibold">Role:</span> {{ request.user.profile.role }}</p>
+
+          </div>
+        </div>
+      </div>
+
+      <nav class="space-y-2">
+        <a href="dashboard.html"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-tachometer-alt mr-3 icon"></i>
+          Dashboard
+        </a>
+        <a href="{% url 'projects:clients' %}"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-project-diagram mr-3 icon"></i>
+          Clients
+        </a>
+        <a href="{% url 'projects:projects' %}"
+          class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
+          <i class="fas fa-project-diagram mr-3 icon"></i>
+          Projects
+        </a>
+        <a href="{% url 'calendar' %}"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-calendar mr-3 icon"></i>
+          Calendar
+        </a>
+
+        <a href="#"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-users mr-3 icon"></i>
+          Users
+        </a>
+        <a href="#"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-envelope mr-3 icon"></i>
+          Email
+        </a>
+        <a href="#"
+          class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
+          <i class="fas fa-folder mr-3 icon"></i>
+          File Manager
+        </a>
+      </nav>
+
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+
+      <!-- Header -->
+      <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <button id="sidebar-toggle" class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+              <i class="fas fa-bars text-xl"></i>
+            </button>
+            <h1 class="text-2xl font-semibold text-gray-900">{{ project.name }}</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <input type="text" placeholder="Search projects..."
+                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+              <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            </div>
+            <button class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-bell text-xl"></i>
+            </button>
+            <div class="flex items-center">
+              <img src="{% static 'images/thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
+              <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.username }}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+
+        <!-- Project Card -->
+        <div class="bg-white rounded-xl shadow p-6 mb-8 w-full">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">🚀 {{ project.name }}</h2>
+          <p class="text-gray-600 mb-4">{{ project.description }}</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <p><span class="font-semibold text-gray-700">Start Date:</span> {{ project.start_date|date:"d M Y" }}</p>
+            <p><span class="font-semibold text-gray-700">End Date:</span> {{ project.end_date|date:"d M Y" }}</p>
+            <p><span class="font-semibold text-gray-700">Status:</span>
+              {% if project.status == "Active" %}
+              <span class="text-green-600 font-semibold">{{ project.status }}</span>
+              {% elif project.status == "Completed" %}
+              <span class="text-blue-600 font-semibold">{{ project.status }}</span>
+              {% else %}
+              <span class="text-yellow-600 font-semibold">{{ project.status }}</span>
+              {% endif %}
+            </p>
+            <p><span class="font-semibold text-gray-700">Members:</span>
+              {% for member in project.team_members.all %}
+              {{ member.user.username }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+              <span class="text-gray-400">No members</span>
+              {% endfor %}
+            </p>
+          </div>
+        </div>
+
+        <!-- Epics Grid -->
+        <!-- Epics Grid -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-gray-800">📌 Epic Tasks</h3>
+            <!-- Toggle Epic Form Button -->
+            <button id="toggleEpicFormBtn"
+              class="px-3 py-1 bg-primary text-white rounded-lg hover:bg-secondary text-sm">
+              + Add Epic
+            </button>
+          </div>
+
+          <!-- Add Epic Form (Initially Hidden) -->
+          <div id="addEpicFormContainer" class="hidden bg-gray-50 p-4 rounded-lg border mb-6">
+            <form method="POST" action="{% url 'projects:epic_create' project.id %}">
+              {% csrf_token %}
+              <input type="text" name="title" placeholder="Epic Title" class="w-full border rounded-lg p-2 mb-2"
+                required>
+              <textarea name="description" placeholder="Epic Description"
+                class="w-full border rounded-lg p-2 mb-2"></textarea>
+
+              <div class="grid grid-cols-2 gap-2 mb-2">
+                <input type="date" name="deadline" class="w-full border rounded-lg p-2">
+                <select name="priority" class="w-full border rounded-lg p-2">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <select name="status" class="w-full border rounded-lg p-2">
+                  <option value="pending">Pending</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <label class="block mb-1 text-sm font-medium text-gray-700">Assign Users</label>
+              <select name="assigned_users" multiple class="w-full border rounded-lg p-2 mb-3">
+                {% for profile in project.team_members.all %}
+                <option value="{{ profile.id }}">{{ profile.user.username }}</option>
+                {% endfor %}
+              </select>
+
+              <div class="flex justify-end gap-2">
+                <button type="button" id="cancelEpicFormBtn"
+                  class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button type="submit" class="px-3 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save
+                  Epic</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="space-y-6">
+            {% for epic in epics %}
+            <div class="bg-white rounded-xl shadow p-5 hover:shadow-lg transition w-full id=" epic-{{ epic.id }}">
+              <!-- ✅ Clickable title for sidebar -->
+               <input type="checkbox"
+       class="epic-checkbox toggleEpicCompletion"
+       data-epic-id="{{ epic.id }}"
+       {% if epic.status == "completed" %}checked disabled{% endif %}>
+
+              <h4 class="text-lg font-bold text-primary mb-2 cursor-pointer epic-title"  data-id="{{ epic.id }}" data-title="{{ epic.title }}"  
+              data-description="{{ epic.description }}" data-deadline="{{ epic.deadline|date:'d M Y' }}"
+                data-priority="{{ epic.priority }}" data-status="{{ epic.status }}"
+                data-assigned="{% for profile in epic.assigned_users.all %}{{ profile.user.username }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                {{ epic.title }}
+              </h4>
+              <p class="text-gray-600 text-sm mb-3">{{ epic.description }}</p>
+              <div class="flex justify-between text-sm text-gray-700 mb-2">
+                <p><span class="font-semibold">Deadline:</span> {{ epic.deadline|date:"d M Y" }}</p>
+                <p><span class="font-semibold">Priority:</span> {{ epic.priority }}</p>
+              </div>
+              <div class="mb-2">
+                <span class="font-semibold">Assigned:</span>
+                {% for profile in epic.assigned_users.all %}
+                <span class="inline-block bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded-full mr-1">
+                  {{ profile.user.username }}
+                </span>
+                {% empty %}
+                <span class="text-gray-400">Unassigned</span>
+                {% endfor %}
+              </div>
+              <p class="text-sm mb-2"><span class="font-semibold">Status:</span>
+                {% if epic.status == "In Progress" %}
+                <span class="text-yellow-600 font-semibold">{{ epic.status }}</span>
+                {% elif epic.status == "Completed" %}
+                <span class="text-green-600 font-semibold">{{ epic.status }}</span>
+                {% else %}
+                <span class="text-gray-600 font-semibold">{{ epic.status }}</span>
+                {% endif %}
+              </p>
+
+              <!-- Buttons -->
+              <div class="flex gap-2 mb-2">
+                <button class="px-3 py-1 text-sm bg-accent text-white rounded-lg hover:bg-secondary toggleTaskFormBtn"
+                  data-epic="{{ epic.id }}">
+                  + Add Task
+                </button>
+                <button class="px-3 py-1 text-sm bg-primary text-white rounded-lg hover:bg-secondary toggleTaskListBtn"
+                  data-epic="{{ epic.id }}">
+                  Show Tasks
+                </button>
+              </div>
+
+              <!-- Task Form -->
+              <div class="taskFormContainer hidden mt-3 bg-gray-50 p-3 rounded-lg border" id="taskForm-{{ epic.id }}">
+                <form method="POST" action="{% url 'projects:task_create' epic.id %}">
+                  {% csrf_token %}
+                  <input type="text" name="title" placeholder="Task Title" class="w-full border rounded-lg p-2 mb-2"
+                    required>
+                  <textarea name="description" placeholder="Task Description"
+                    class="w-full border rounded-lg p-2 mb-2"></textarea>
+
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="date" name="deadline" class="w-full border rounded-lg p-2">
+                    <select name="priority" class="w-full border rounded-lg p-2">
+                      <option value="low">Low</option>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select name="status" class="w-full border rounded-lg p-2">
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                    <select name="assigned_users" multiple class="w-full border rounded-lg p-2">
+                      {% for profile in profiles %}
+                      <option value="{{ profile.id }}">{{ profile.user.username }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="cancelTaskFormBtn px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+                      data-epic="{{ epic.id }}">Cancel</button>
+                    <button type="submit"
+                      class="px-3 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Task List -->
+              <div class="mt-3 space-y-2 hidden taskListContainer" id="taskList-{{ epic.id }}">
+                {% for task in epic.tasks.all %}
+               <div class="task-item border rounded-lg p-3 bg-gray-50 hover:bg-gray-100 transition w-full" id="task-{{ task.id }}">
+
+<input type="checkbox"
+       class="task-checkbox toggleTaskCompletion"
+       data-task-id="{{ task.id }}"
+       {% if task.status == "completed" %}checked disabled{% endif %}>
+
+                  <!-- ✅ Clickable title for sidebar -->
+                  <p class="font-semibold cursor-pointer task-title"  data-id="{{ task.id }}" data-title="{{ task.title }}"
+                    data-description="{{ task.description }}" data-deadline="{{ task.deadline|date:'d M Y' }}"
+                    data-priority="{{ task.get_priority_display }}" data-status="{{ task.get_status_display }}"
+                    data-assigned="{% for user in task.assigned_users.all %}{{ user.user.username }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                    {{ task.title }}
+                  </p>
+
+                  <p class="text-gray-600 text-sm">{{ task.description }}</p>
+                  <p class="text-xs text-gray-500 flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-gray-400"></i> Deadline: {{ task.deadline|date:"d M Y" }}
+                    <span class="mx-1">|</span>
+                    <i class="fas fa-tasks text-gray-400"></i> Status: {{ task.get_status_display }}
+                    <span class="mx-1">|</span>
+                    <i class="fas fa-flag text-gray-400"></i> Priority: {{ task.get_priority_display }}
+                  </p>
+
+                  {% if task.assigned_users.exists %}
+                  <p class="text-xs text-gray-700 mt-1 flex items-center gap-2">
+                    <i class="fas fa-users text-gray-400"></i>
+                    <span class="font-medium">Assigned to:</span>
+                    {% for user in task.assigned_users.all %}
+                    <span class="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {{ user.user.username }}
+                    </span>
+                    {% endfor %}
+                  </p>
+                  {% else %}
+                  <p class="text-xs text-gray-400 mt-1 italic flex items-center gap-2">
+                    <i class="fas fa-user-slash text-gray-400"></i> No users assigned
+                  </p>
+                  {% endif %}
+
+                  <!-- SubTasks -->
+                  <button class="mt-2 px-2 py-1 text-xs bg-accent text-white rounded-lg toggleSubTaskBtn"
+                    data-task="{{ task.id }}">
+                    <i class="fas fa-list mr-1"></i> Show SubTasks
+                  </button>
+
+                  <!-- SubTask List -->
+                  <div class="mt-2 hidden subTaskContainer" id="subTask-{{ task.id }}">
+                    {% for subtask in task.subtasks.all %}
+                    <div
+                      class="subtask-item border p-2 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-4"
+                      id="subtask-{{ subtask.id }}" data-title="{{ subtask.title }}"
+                      data-description="{{ subtask.description }}" data-deadline="{{ subtask.deadline|date:'d M Y' }}"
+                      data-status="{% if subtask.status == 'completed' %}Completed{% else %}Pending{% endif %}"
+                      data-subtask-id="{{ subtask.id }}"
+                      data-assigned="{% for user in subtask.assigned_users.all %}{{ user.user.username }}{% if not forloop.last %},{% endif %}{% endfor %}">
+
+                      <!-- Left Side: Checkbox, title, users -->
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 text-sm">
+                          <input type="checkbox" class="subtask-checkbox toggleSubTaskCompletion"
+                          data-subtask-id="{{ subtask.id }}" {% if subtask.status == "completed" %}checked disabled{% endif %}>
+
+                          <span class="subtask-title" data-id="{{ subtask.id }}" data-title="{{ subtask.title }}"
+                            data-description="{{ subtask.description }}" data-deadline="{{ subtask.deadline }}"
+                            data-priority="{{ subtask.priority }}" data-status="{{ subtask.status }}"
+                            data-assigned="{% for u in subtask.assigned_users.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                            data-time_estimated="{{ subtask.estimated_time }}"
+                            data-time_tracked="{{ subtask.time_tracked }}">
+                            {{ subtask.title }}
+                          </span>
+                          
+  <!-- ✅ add this so JS can update status instantly -->
+  <span class="subtask-status text-gray-500"
+        data-id="{{ subtask.id }}">
+    {{ subtask.status }}
+  </span>
+                        </div>
+
+
+                        {% if subtask.assigned_users.exists %}
+                        <div class="ml-6 flex flex-wrap gap-1 mt-1">
+                          {% for user in subtask.assigned_users.all %}
+                          <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                            {{ user.user.username }}
+                          </span>
+                          {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="ml-6 text-xs text-gray-400 italic flex items-center gap-1">
+                          <i class="fas fa-user-slash text-gray-300"></i> No users assigned
+                        </p>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-400 text-xs">No SubTasks</p>
+                    {% endfor %}
+
+                    <!-- Add SubTask Button & Form -->
+                    <div class="mt-2">
+                      <button class="px-2 py-1 text-xs bg-primary text-white rounded-lg toggleAddSubTaskBtn"
+                        data-task="{{ task.id }}">
+                        <i class="fas fa-plus mr-1"></i> Add SubTask
+                      </button>
+
+                      <div class="mt-2 hidden addSubTaskFormContainer" id="addSubTaskForm-{{ task.id }}">
+                        <form method="POST" action="{% url 'projects:subtask_create' task.id %}">
+                          {% csrf_token %}
+
+                          <!-- Hidden Status -->
+                          <input type="hidden" name="status" value="pending">
+
+                          <!-- Title -->
+                          <input type="text" name="title" placeholder="SubTask Title"
+                            class="w-full border rounded-lg p-2 mb-2" required>
+
+                          <!-- Description -->
+                          <textarea name="description" placeholder="SubTask Description"
+                            class="w-full border rounded-lg p-2 mb-2"></textarea>
+
+                          <!-- Priority -->
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                          <select name="priority" class="w-full border rounded-lg p-2 mb-3">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                          </select>
+
+                          <!-- Deadline -->
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                          <input type="date" name="deadline" class="w-full border rounded-lg p-2 mb-3">
+
+
+                          <!-- Assigned Users -->
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Assign Users</label>
+                          <select name="assigned_users" multiple
+                            class="w-full border rounded-lg p-2 mb-3 form-multiselect">
+                            {% for profile in profiles %}
+                            <option value="{{ profile.id }}">{{ profile.user.username }}</option>
+                            {% endfor %}
+                          </select>
+
+                          <!-- Buttons -->
+                          <div class="flex justify-end gap-2">
+                            <button type="button"
+                              class="cancelSubTaskFormBtn px-2 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+                              data-task="{{ task.id }}">Cancel</button>
+                            <button type="submit"
+                              class="px-2 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+
+                    <!-- Time Track Modal -->
+                    
+                    <!-- End Add SubTask -->
+                  </div>
+
+
+
+                </div>
+                {% empty %}
+                <p class="text-gray-400 text-sm">No tasks yet</p>
+                {% endfor %}
+              </div>
+
+
+
+
+            </div>
+            {% empty %}
+            <p class="text-gray-500">No epics found for this project.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+  </main>
+  </div>
+  </div>
+<div id="timeTrackModal"
+                      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div class="bg-white rounded-lg shadow-lg w-96 p-6">
+                        <h2 class="text-lg font-semibold mb-4">Track Time</h2>
+                        <form id="timeTrackForm" method="POST" action="">
+                          {% csrf_token %}
+                          <input type="hidden" name="subtask_id" id="timeTrackSubTaskId">
+
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Time Spent (hours)</label>
+                          <input type="number" name="time_tracked" id="timeTrackedInput"
+       class="w-full border rounded-lg p-2 mb-4"
+       placeholder="Enter hours (e.g. 1.5)" min="0" step="0.01" required>
+
+                          <div class="flex justify-end gap-2">
+                            <button type="button" id="cancelTimeTrack"
+                              class="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                            <button type="submit"
+                              class="px-3 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+  <script>
+    // Toggle Epic Form
+    const toggleEpicBtn = document.getElementById('toggleEpicFormBtn');
+    const addEpicForm = document.getElementById('addEpicFormContainer');
+    const cancelEpicBtn = document.getElementById('cancelEpicFormBtn');
+    toggleEpicBtn.addEventListener('click', () => addEpicForm.classList.toggle('hidden'));
+    cancelEpicBtn.addEventListener('click', () => addEpicForm.classList.add('hidden'));
+
+    // Toggle Task Form
+    document.querySelectorAll(".toggleTaskFormBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const epicId = btn.dataset.epic;
+        document.getElementById(`taskForm-${epicId}`).classList.toggle("hidden");
+      });
+    });
+    document.querySelectorAll(".cancelTaskFormBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const epicId = btn.dataset.epic;
+        document.getElementById(`taskForm-${epicId}`).classList.add("hidden");
+      });
+    });
+
+    // Toggle Task List
+    document.querySelectorAll(".toggleTaskListBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const epicId = btn.dataset.epic;
+        const taskList = document.getElementById(`taskList-${epicId}`);
+        taskList.classList.toggle("hidden");
+        btn.textContent = taskList.classList.contains("hidden") ? "Show Tasks" : "Hide Tasks";
+      });
+    });
+
+    // Toggle SubTask List
+    document.querySelectorAll(".toggleSubTaskBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const taskId = btn.dataset.task;
+        const subTaskList = document.getElementById(`subTask-${taskId}`);
+        subTaskList.classList.toggle("hidden");
+        btn.textContent = subTaskList.classList.contains("hidden") ? "Show SubTasks" : "Hide SubTasks";
+      });
+    });
+
+    // Toggle Add SubTask Form
+    document.querySelectorAll(".toggleAddSubTaskBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const taskId = btn.dataset.task;
+        document.getElementById(`addSubTaskForm-${taskId}`).classList.toggle("hidden");
+      });
+    });
+
+    // Cancel SubTask Form
+    document.querySelectorAll(".cancelSubTaskFormBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const taskId = btn.dataset.task;
+        document.getElementById(`addSubTaskForm-${taskId}`).classList.add("hidden");
+      });
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      document.querySelectorAll(".toggleSubTaskCompletion").forEach(checkbox => {
+        checkbox.addEventListener("click", function (e) {
+          const subtaskId = this.dataset.subtaskId;
+
+          // Only act if not already completed
+          if (!this.checked) return e.preventDefault();
+
+          fetch(`/projects/subtask/${subtaskId}/toggle/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": csrftoken,
+              "Content-Type": "application/json",
+            },
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                this.disabled = true; // lock it
+                this.nextElementSibling.classList.add("line-through", "text-gray-400");
+              } else {
+                this.checked = false; // rollback
+              }
+            })
+            .catch(() => { this.checked = false; });
+        });
+      });
+    });
+  </script>
+
+  <!-- ✅ Task Sidebar (drawer) -->
+  <div id="taskSidebar"
+    class="fixed top-0 right-0 w-96 h-full bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+
+    <div class="flex justify-between items-center p-4 border-b">
+      <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-tasks text-primary"></i> Task Details
+      </h3>
+      <button id="closeSidebar" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="p-4 space-y-4 text-sm text-gray-700">
+
+      <!-- Title -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-heading text-blue-500"></i>
+        <span class="font-semibold">Title:</span> <span id="sidebarTitle"></span>
+      </p>
+
+      <!-- Description -->
+      <p class="flex items-start gap-2">
+        <i class="fas fa-align-left text-green-500 mt-0.5"></i>
+        <span class="font-semibold">Description:</span>
+        <span id="sidebarDescription" class="flex-1"></span>
+      </p>
+
+      <!-- Deadline -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-calendar-alt text-red-500"></i>
+        <span class="font-semibold">Deadline:</span> <span id="sidebarDeadline"></span>
+      </p>
+
+      <!-- Priority -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-flag text-yellow-500"></i>
+        <span class="font-semibold">Priority:</span> <span id="sidebarPriority"></span>
+      </p>
+
+      <!-- Status -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-info-circle text-purple-500"></i>
+        <span class="font-semibold">Status:</span> <span id="sidebarStatus"></span>
+      </p>
+
+      <!-- Assigned Users -->
+      <div class="flex items-start gap-2">
+        <i class="fas fa-users text-indigo-500 mt-0.5"></i>
+        <div>
+          <span class="font-semibold">Assigned:</span>
+          <div id="sidebarAssigned" class="mt-1 flex flex-wrap gap-1"></div>
+        </div>
+      </div>
+
+      <!-- ✅ Time Estimated -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-clock text-orange-500"></i>
+        <span class="font-semibold">Time Estimated:</span>
+<span id="sidebarEstimatedTime">{{ subtask.estimated_time_display }}</span>
+      </p>
+
+      <!-- ✅ Subtask Time Tracked -->
+      <p class="flex items-center gap-2">
+        <i class="fas fa-stopwatch text-teal-500"></i>
+        <span class="font-semibold">Time Track:</span>
+        <span id="sidebarTimeTracked">0</span>
+      </p>
+
+      
+
+    </div>
+</div>
+
+
+
+  <!-- Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ---------- Helpers ----------
+  function formatEstimatedTime(hours) {
+    if (hours === null || hours === undefined || isNaN(Number(hours))) return "0h";
+    const h = Number(hours);
+    if (h >= 24) {
+      const days = Math.round((h / 24) * 10) / 10; // one decimal
+      return `${days}d`;
+    }
+    return `${h.toFixed(1)}h`;
+  }
+  function formatTrackedTime(hours) {
+    if (hours === null || hours === undefined || isNaN(Number(hours))) return "0h";
+    return `${Number(hours).toFixed(1)}h`;
+  }
+
+  // ---------- Modal elements ----------
+  const modal = document.getElementById("timeTrackModal");
+  const form = document.getElementById("timeTrackForm");
+  const cancelBtn = document.getElementById("cancelTimeTrack");
+  const input = document.getElementById("timeTrackedInput");
+  const modalSubtaskId = document.getElementById("timeTrackSubTaskId");
+
+  // Open modal when subtask checkbox changed
+  document.querySelectorAll(".toggleSubTaskCompletion").forEach(checkbox => {
+    checkbox.addEventListener("change", function (e) {
+      e.stopPropagation();
+      if (this.checked && !this.disabled) {
+        this.checked = true;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        modalSubtaskId.value = this.dataset.subtaskId;
+      } else {
+        this.checked = true;
+      }
+    });
+    checkbox.addEventListener("click", e => e.stopPropagation());
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    input.value = "";
+    const subtaskId = modalSubtaskId.value;
+    const checkbox = document.querySelector(`.toggleSubTaskCompletion[data-subtask-id="${subtaskId}"]`);
+    if (checkbox && !checkbox.disabled) checkbox.checked = false;
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const subtaskId = modalSubtaskId.value;
+    const hours = input.value;
+
+    fetch(`/projects/subtask/${subtaskId}/track-time/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+      },
+      body: new URLSearchParams({
+        "time_tracked": hours,
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then(data => {
+      if (!data.success) {
+        alert(data.error || "Error saving time!");
+        return;
+      }
+
+      const checkbox = document.querySelector(`.toggleSubTaskCompletion[data-subtask-id="${data.subtask_id}"]`);
+      if (checkbox) {
+        checkbox.disabled = true;
+        checkbox.checked = true;
+        const titleEl = checkbox.nextElementSibling;
+        if (titleEl) titleEl.classList.add("line-through", "text-gray-400");
+      }
+
+      const sidebarTracked = document.getElementById("sidebarTimeTracked");
+      if (sidebarTracked) sidebarTracked.textContent = formatTrackedTime(data.time_tracked);
+
+      const sidebarStatus = document.getElementById("sidebarStatus");
+      if (sidebarStatus && String(sidebarStatus.dataset.id) === String(data.subtask_id)) {
+        sidebarStatus.textContent = data.status;
+      }
+
+      if (data.task_completed) {
+        const taskCheckbox = document.querySelector(`.toggleTaskCompletion[data-task-id="${data.task_id}"]`);
+        if (taskCheckbox) {
+          taskCheckbox.checked = true;
+          taskCheckbox.disabled = true;
+          const taskTitle = document.querySelector(`.task-title[data-id="${data.task_id}"]`);
+          if (taskTitle) taskTitle.classList.add("line-through", "text-gray-400");
+        }
+        if (data.epic_completed) {
+          const epicCheckbox = document.querySelector(`.toggleEpicCompletion[data-epic-id="${data.epic_id}"]`);
+          if (epicCheckbox) {
+            epicCheckbox.checked = true;
+            epicCheckbox.disabled = true;
+            const epicTitle = document.querySelector(`.epic-title[data-id="${data.epic_id}"]`);
+            if (epicTitle) epicTitle.classList.add("line-through", "text-gray-400");
+          }
+        }
+      }
+
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      input.value = "";
+    })
+    .catch(err => {
+      console.error("❌ AJAX error:", err);
+      alert("Error saving time (network).");
+    });
+  });
+
+  // ---------- Sidebar ----------
+  const sidebar = document.getElementById("taskSidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  const closeBtn = document.getElementById("closeSidebar");
+
+  function openSidebar(data) {
+    document.getElementById("sidebarTitle").textContent = data.title || "";
+    document.getElementById("sidebarDescription").textContent = data.description || "";
+    document.getElementById("sidebarDeadline").textContent = data.deadline || "";
+    document.getElementById("sidebarPriority").textContent = data.priority || "";
+    document.getElementById("sidebarStatus").textContent = data.status || "";
+    document.getElementById("sidebarStatus").dataset.id = data.id || "";
+
+    const assigned = document.getElementById("sidebarAssigned");
+    if (assigned) {
+      assigned.innerHTML = "";
+      (data.assigned || "").split(",").forEach(user => {
+        if (user.trim() !== "") {
+          const span = document.createElement("span");
+          span.className = "inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full";
+          span.textContent = user.trim();
+          assigned.appendChild(span);
+        }
+      });
+    }
+
+    // ✅ Fix: calculate estimated time properly
+    let hoursForEstimated = 0;
+    if (data.time_estimated) {
+      hoursForEstimated = parseFloat(data.time_estimated);
+    } else if (data.deadline) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const deadline = new Date(data.deadline);
+      deadline.setHours(0, 0, 0, 0);
+
+      if (!isNaN(deadline)) {
+        const diffMs = deadline - today;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) {
+          // deadline is today or passed
+          hoursForEstimated = 0;
+        } else {
+          hoursForEstimated = diffDays * 24;
+        }
+      }
+    }
+
+    const sidebarEstimated = document.getElementById("sidebarEstimatedTime");
+    if (sidebarEstimated) sidebarEstimated.textContent = formatEstimatedTime(hoursForEstimated);
+
+    const sidebarTracked = document.getElementById("sidebarTimeTracked");
+    if (sidebarTracked) sidebarTracked.textContent = formatTrackedTime(data.time_tracked || 0);
+
+    sidebar.classList.remove("translate-x-full");
+    overlay.classList.remove("hidden");
+  }
+
+  document.querySelectorAll(".task-title, .epic-title, .subtask-title").forEach(title => {
+    title.addEventListener("click", e => {
+      if (e.target.closest("input[type=checkbox]")) {
+        e.preventDefault();
+        return;
+      }
+      openSidebar(title.dataset);
+    });
+  });
+
+  closeBtn.addEventListener("click", () => {
+    sidebar.classList.add("translate-x-full");
+    overlay.classList.add("hidden");
+  });
+  overlay.addEventListener("click", () => {
+    sidebar.classList.add("translate-x-full");
+    overlay.classList.add("hidden");
+  });
+
+  // ---------- Task / Epic completion handlers ----------
+  document.querySelectorAll(".toggleTaskCompletion").forEach(checkbox => {
+    checkbox.addEventListener("change", function () {
+      if (!(this.checked && !this.disabled)) { this.checked = true; return; }
+
+      const taskId = this.dataset.taskId;
+      fetch(`/projects/task/${taskId}/can-complete/`)
+        .then(res => res.json())
+        .then(check => {
+          if (!check.allowed) {
+            alert("⚠️ You can only complete this Task after all its Subtasks are completed.");
+            this.checked = false;
+            return;
+          }
+          fetch(`/projects/task/${taskId}/toggle/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              this.disabled = true;
+              const sidebarStatus = document.getElementById("sidebarStatus");
+              if (sidebarStatus && String(sidebarStatus.dataset.id) === String(taskId)) {
+                sidebarStatus.textContent = "completed";
+              }
+              const taskTitle = document.querySelector(`.task-title[data-id="${taskId}"]`);
+              if (taskTitle) taskTitle.classList.add("line-through", "text-gray-400");
+            } else {
+              alert(data.error || "Could not complete task");
+              this.checked = false;
+            }
+          });
+        });
+    });
+  });
+
+  document.querySelectorAll(".toggleEpicCompletion").forEach(checkbox => {
+    checkbox.addEventListener("change", function () {
+      if (!(this.checked && !this.disabled)) { this.checked = true; return; }
+
+      const epicId = this.dataset.epicId;
+      fetch(`/projects/epic/${epicId}/can-complete/`)
+        .then(res => res.json())
+        .then(check => {
+          if (!check.allowed) {
+            alert("⚠️ You can only complete this Epic after all its Tasks are completed.");
+            this.checked = false;
+            return;
+          }
+          fetch(`/projects/epic/${epicId}/toggle/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              this.disabled = true;
+              const sidebarStatus = document.getElementById("sidebarStatus");
+              if (sidebarStatus && String(sidebarStatus.dataset.id) === String(epicId)) {
+                sidebarStatus.textContent = "completed";
+              }
+              const epicTitle = document.querySelector(`.epic-title[data-id="${epicId}"]`);
+              if (epicTitle) epicTitle.classList.add("line-through", "text-gray-400");
+            } else {
+              alert(data.error || "Could not complete epic");
+              this.checked = false;
+            }
+          });
+        });
+    });
+  });
+
+}); // DOMContentLoaded
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Check if URL has an anchor
+  if (window.location.hash) {
+    const targetId = window.location.hash.substring(1); // remove the "#"
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      // ✅ If it's a task, make sure its parent task list is visible
+      if (targetId.startsWith("task-")) {
+        const container = targetElement.closest(".taskListContainer");
+        if (container) container.classList.remove("hidden");
+      }
+
+      // ✅ If it's a subtask, make sure parent subtask container is visible
+      if (targetId.startsWith("subtask-")) {
+        const subTaskContainer = targetElement.closest(".subTaskContainer");
+        if (subTaskContainer) {
+          subTaskContainer.classList.remove("hidden");
+          // also unhide the parent task list
+          const taskContainer = subTaskContainer.closest(".taskListContainer");
+          if (taskContainer) taskContainer.classList.remove("hidden");
+        }
+      }
+
+      // ✅ Optional: scroll into view smoothly
+      targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetElement.classList.add("ring-2", "ring-primary"); // highlight
+      setTimeout(() => targetElement.classList.remove("ring-2", "ring-primary"), 2000);
+    }
+  }
+});
+</script>
+
+
+
+
+</body>
+
+</html>
