@@ -1,8 +1,5 @@
-{% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,23 +21,28 @@
             }
         }
     </script>
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
 </head>
-
 <body class="bg-gray-50">
     <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div id="sidebar"
-            class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
+         <div id="sidebar" class="text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0 bg-gradient-to-b from-blue-600/25 to-purple-600/25 backdrop-blur-xl border-r border-white/20">
             <div class="flex items-center mb-8">
-                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
                     <i class="fas fa-tasks text-white"></i>
                 </div>
                 <h1 class="text-xl font-bold">Adminto</h1>
             </div>
-
+            
             <div class="mb-8">
-                <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
-                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+                <div class="flex items-center mb-4">
+                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 border-2 border-white/30">
                     <div>
                         <p><span class="font-semibold">Name:</span> {{ request.user.username }}</p>
                         <p><span class="font-semibold">Role:</span> {{ request.user.profile.role }}</p>
@@ -48,87 +50,67 @@
                     </div>
                 </div>
             </div>
-
+            
             <nav class="space-y-2">
-                <a href="dashboard.html"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-tachometer-alt mr-3 icon"></i>
+                <a href="dashboard.html" class="flex items-center px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <i class="fas fa-tachometer-alt mr-3"></i>
                     Dashboard
                 </a>
-                <a href="{% url 'projects:clients' %}"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                <a href="{% url 'projects:clients' %}" class="flex items-center px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <i class="fas fa-tasks mr-3"></i>
                     Clients
                 </a>
-                <a href="{% url 'projects:projects' %}"
-                    class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
-                    <i class="fas fa-project-diagram mr-3 icon"></i>
+                <a href="{% url 'projects:projects' %}" class="flex items-center px-4 py-3 text-white bg-blue-500/40 rounded-lg shadow-lg backdrop-blur-sm">
+                    <i class="fas fa-project-diagram mr-3"></i>
                     Projects
                 </a>
-                <a href="{% url 'calendar' %}"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-calendar mr-3 icon"></i>
+                <a href="calendar.html" class="flex items-center px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <i class="fas fa-calendar mr-3"></i>
                     Calendar
                 </a>
-
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-users mr-3 icon"></i>
+                <a href="#" class="flex items-center px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <i class="fas fa-users mr-3"></i>
                     Users
                 </a>
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-envelope mr-3 icon"></i>
+                <a href="#" class="flex items-center px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <i class="fas fa-envelope mr-3"></i>
                     Email
                 </a>
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-folder mr-3 icon"></i>
-                    File Manager
-                </a>
             </nav>
-
         </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
-            <!-- Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        
+         <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+             <header class="bg-white/80 backdrop-blur-xl shadow-sm border-b border-white/20 px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <button id="sidebar-toggle"
-                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
+                        <button id="sidebar-toggle" class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
-                        <h1 class="text-2xl font-semibold text-gray-900">
+<h1 class="text-2xl font-semibold text-gray-900">
                             {% if client %}
                             Projects for {{ client.name }}
                             {% else %}
                             All Projects
                             {% endif %}
-                        </h1>
-                    </div>
+                        </h1>                    </div>
                     <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <input type="text" placeholder="Search projects..."
-                                class="bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <div class="relative hidden md:block">
+                            <input type="text" placeholder="Search projects..." class="bg-white/60 backdrop-blur-sm border border-white/40 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                         </div>
-                        <button class="text-gray-500 hover:text-gray-700">
+                        <button class="text-gray-500 hover:text-gray-700 transition-colors">
                             <i class="fas fa-bell text-xl"></i>
                         </button>
                         <div class="flex items-center">
-                            <img src="{% static 'thoughtful-man.png' %}" alt="User" class="w-8 h-8 rounded-full">
-                            <span class="ml-2 text-sm font-medium text-gray-700">{{ request.user.get_full_name }}</span>
+                            <img src="public/thoughtful-man.png" alt="User" class="w-8 h-8 rounded-full border-2 border-blue-500/30">
+                            <span class="ml-2 text-sm font-medium text-gray-700 hidden md:inline">{{ request.user.get_full_name }}</span>
                         </div>
                     </div>
                 </div>
             </header>
-
-            <!-- Projects Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+            
+             <main class="flex-1 overflow-x-hidden overflow-y-auto p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-semibold text-gray-900">Project Management</h2>
                     {% if request.user.profile.role == "manager" %}
                     <button id="createProjectBtn"
                         class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
@@ -164,13 +146,15 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                                <select name="status" id="id_status"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
-                                    <option value="{{ value }}" {% if editing and value|stringformat:"s" == editing.status|stringformat:"s" %}selected{% endif %}>
-    {{ label }}
-</option>
+                               <select name="status" id="id_status"
+    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+    {% for value, label in form.fields.status.choices %}
+        <option value="{{ value }}" {% if editing and editing.status == value %}selected{% endif %}>
+            {{ label }}
+        </option>
+    {% endfor %}
+</select>
 
-                                </select>
 
                             </div>
 
@@ -197,12 +181,14 @@
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
                                 <select name="team_members" id="id_team_members" multiple
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
-                                    {% for member in form.fields.team_members.queryset %}
-                                    <option value="{{ member.id }}">{{
-                                        member.user.first_name|default:member.user.username }}</option>
-                                    {% endfor %}
-                                </select>
+    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+    {% for member in form.fields.team_members.queryset %}
+        <option value="{{ member.id }}" {% if editing and member in editing.team_members.all %}selected{% endif %}>
+            {{ member.user.first_name|default:member.user.username }}
+        </option>
+    {% endfor %}
+</select>
+
                                 <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple members</p>
                             </div>
                         </div>
@@ -326,8 +312,7 @@
 
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
 
-    <script src="{% static 'js/sidebar.js' %}"></script>
-
+ 
     <script>
         const createBtn = document.getElementById('createProjectBtn');
         const projectFormWrap = document.getElementById('projectForm');

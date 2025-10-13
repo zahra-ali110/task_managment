@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: url('https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .sidebar-gradient {
+            background: linear-gradient(180deg,
+                    rgba(59, 130, 246, 0.25) 0%,
+                    rgba(147, 51, 234, 0.25) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .header-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .sidebar-item.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .task-row {
+            transition: all 0.2s ease;
+        }
+
+        .task-row:hover {
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateX(2px);
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-overdue {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-ongoing {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .badge-completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="sidebar fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-white/20 transition-transform duration-300 z-40">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tasks text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">TaskFlow</h1>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="index.html" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-home w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="tasks.html" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-tasks w-5"></i>
+                    <span>Tasks</span>
+                </a>
+                <a href="projects.html"
+                    class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-folder w-5"></i>
+                    <span>Projects</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-calendar w-5"></i>
+                    <span>Calendar</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Users</span>
+                </a>
+                <a href="#" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-envelope w-5"></i>
+                    <span>Email</span>
+                </a>
+                <a href="profile.html"
+                    class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg text-white">
+                    <i class="fas fa-user w-5"></i>
+                    <span>Profile</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ml-0 md:ml-64 min-h-screen">
+        <!-- Header -->
+        <header class="header-glass sticky top-0 z-30 border-b border-gray-200/50">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center space-x-4">
+                    <button id="menuToggle" class="md:hidden text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                     
+                </div>
+                
+
+                <div class="flex items-center space-x-4">
+                   <div class="relative">
+  <button id="notifBtn"
+    class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-white/50 rounded-lg transition">
+    <i class="fas fa-bell text-xl"></i>
+    {% if assigned_to_me or assigned_by_me %}
+      <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+    {% endif %}
+  </button>
+
+  <!-- Notification dropdown -->
+  <div id="notifDropdown"
+       class="hidden absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-xl border border-gray-200 z-50">
+    <div class="p-3 border-b border-gray-200 font-semibold text-gray-800">
+      🔔 Notifications
+    </div>
+
+    <div class="max-h-64 overflow-y-auto">
+      <div class="p-3">
+        <p class="font-semibold text-gray-700">📥 Tasks assigned to you:</p>
+        {% if assigned_to_me %}
+          <ul class="pl-3 mt-1 text-sm text-gray-600 space-y-1">
+            {% for t in assigned_to_me %}
+              <li>• {{ t.title }} ({{ t.status|title }})</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-gray-400 pl-3">No tasks assigned to you</p>
+        {% endif %}
+      </div>
+
+      <div class="p-3 border-t border-gray-200">
+        <p class="font-semibold text-gray-700">📤 Tasks you assigned:</p>
+        {% if assigned_by_me %}
+          <ul class="pl-3 mt-1 text-sm text-gray-600 space-y-1">
+            {% for t in assigned_by_me %}
+              <li>• {{ t.title }} → {{ t.assigned_users.all|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-gray-400 pl-3">No tasks you assigned</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+                    <div class="flex items-center space-x-3 cursor-pointer hover:bg-white/50 rounded-lg p-2 transition">
+    <div class="avatar">
+        <span>{{ name|slice:":2"|upper }}</span>
+    </div>
+    <div class="hidden md:block">
+        <p><span class="font-semibold">Name:</span> {{ name }}</p>
+        <p><span class="font-semibold">Role:</span> {{ role }}</p>
+    </div>
+</div>
+
+                </div>
+            </div>
+        </header>
+
+        <!-- Profile Content -->
+        <main class="p-6">
+            <!-- Profile Header -->
+            <div class="card-glass rounded-2xl shadow-xl p-8 mb-6">
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+    <div
+        class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+        {{ name|slice:":2"|upper }}
+    </div>
+    <div class="flex-1 text-center md:text-left">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ name }}</h1>
+        <p class="text-gray-600 mb-4">{{ email }}</p>
+
+        <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+    {% if role|lower == "admin" %}
+        <span class="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            <i class="fas fa-crown mr-1"></i> Admin
+        </span>
+    {% elif role|lower == "manager" or role|lower == "project manager" %}
+        <span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+            <i class="fas fa-briefcase mr-1"></i> Manager
+        </span>
+    {% else %}
+        <span class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+            <i class="fas fa-user mr-1"></i> Employee
+        </span>
+    {% endif %}
+</div>
+
+    </div>
+</div>
+
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="stat-card card-glass rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-red-600">{{ overdueCount }}</span>
+                    </div>
+                    <h3 class="text-gray-600 font-medium">Overdue Tasks</h3>
+                </div>
+
+                <div class="stat-card card-glass rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-yellow-600">{{ pendingCount }}</span>
+                    </div>
+                    <h3 class="text-gray-600 font-medium">Pending Tasks</h3>
+                </div>
+
+                <div class="stat-card card-glass rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-spinner text-blue-600 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-blue-600">{{ ongoingCount }}</span>
+                    </div>
+                    <h3 class="text-gray-600 font-medium">Ongoing Tasks</h3>
+                </div>
+
+                <div class="stat-card card-glass rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-green-600">{{ completedCount }}</span>
+                    </div>
+                    <h3 class="text-gray-600 font-medium">Completed Tasks</h3>
+                </div>
+            </div>
+
+            <!-- Tasks Table -->
+            <div class="card-glass rounded-2xl shadow-xl overflow-hidden">
+                <!-- Tabs -->
+                <div class="border-b border-gray-200 bg-white/50 p-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="tab-button active px-6 py-2 rounded-lg font-medium" data-tab="all">
+                            All Tasks
+                        </button>
+                         
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                 
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50/80 border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left">
+                                    <input type="checkbox"
+                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-star text-gray-400 mr-2"></i>
+                                </th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Deadline</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Created by</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Assignee</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Project</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody" class="bg-white/80 divide-y divide-gray-200">
+                            <!-- Tasks will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="bg-white/50 px-6 py-4 border-t border-gray-200">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">
+                                SELECTED: <span id="selectedCount">0</span> / <span id="totalCount">0</span>
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                TOTAL: <button class="text-blue-600 hover:underline">SHOW</button>
+                            </span>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-600">PAGES: 1</span>
+                            <span class="text-sm text-gray-600">RECORDS:</span>
+                            <select
+                                class="px-3 py-1 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option>50</option>
+                                <option>100</option>
+                                <option>200</option>
+                            </select>
+                        </div>
+
+                         
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    const tasks = JSON.parse('{{ tasks_json|escapejs }}');
+
+    function getStatusBadge(status) {
+        switch (status?.toLowerCase()) {
+            case "completed":
+                return `<span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Completed</span>`;
+            case "pending":
+                return `<span class="px-2 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100 rounded-full">Pending</span>`;
+            case "in_progress":
+            case "ongoing":
+                return `<span class="px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full">Ongoing</span>`;
+            case "overdue":
+                return `<span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Overdue</span>`;
+            default:
+                return `<span class="px-2 py-1 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full">N/A</span>`;
+        }
+    }
+
+    function getRoleBadge(role) {
+        if (role?.toLowerCase() === "owner") {
+            return `<span class="px-3 py-1 text-xs font-medium text-purple-700 bg-purple-100 rounded-full">${role}</span>`;
+        } else if (role?.toLowerCase() === "assigned") {
+            return `<span class="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">${role}</span>`;
+        }
+        return `<span class="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">${role || "N/A"}</span>`;
+    }
+
+    function getAvatar(name) {
+        if (!name) return `<div class="w-8 h-8 rounded-full bg-gray-200"></div>`;
+        const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+        return `
+            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-semibold text-xs">
+                ${initials}
+            </div>`;
+    }
+
+    function renderTasks() {
+        const tbody = document.getElementById("taskTableBody");
+        tbody.innerHTML = "";
+
+        if (!tasks.length) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="px-6 py-4 text-center text-gray-500">
+                    No tasks, projects, epics, or subtasks assigned to you.
+                </td>
+            </tr>`;
+            return;
+        }
+
+        tasks.forEach(task => {
+            // 👇 Force overdue label if flagged
+            if (task.is_overdue && task.status.toLowerCase() !== "completed") {
+                task.status = "overdue";
+            }
+
+            const rowClass = task.is_overdue
+                ? "hover:bg-gray-50 transition border-l-4 border-red-500"
+                : "hover:bg-gray-50 transition";
+
+            const row = `
+            <tr class="${rowClass}">
+                <td class="px-6 py-4"><input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"></td>
+                <td class="px-6 py-4"><i class="fas fa-star ${task.starred ? 'text-yellow-400' : 'text-gray-300'}"></i></td>
+                <td class="px-6 py-4 font-medium text-gray-800">${task.name || "Not available"}</td>
+                <td class="px-6 py-4">${getStatusBadge(task.status)}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">${task.deadline || "Not available"}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        ${getAvatar(task.createdBy)}
+                        <span class="text-sm text-gray-700">${task.createdBy || "N/A"}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        ${getAvatar(task.assignee)}
+                        <span class="text-sm text-gray-700">${task.assignee || "N/A"}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-700">${task.project || "Not available"}</td>
+                <td class="px-6 py-4">${getRoleBadge(task.role)}</td>
+            </tr>
+        `;
+            tbody.insertAdjacentHTML("beforeend", row);
+        });
+    }
+
+    function updateStatistics() {
+        document.getElementById("totalCount").textContent = tasks.length;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateStatistics();
+        renderTasks();
+    });
+</script>
+
+
+<script>
+document.getElementById("filterButton").addEventListener("click", function (e) {
+    e.preventDefault();
+
+    const role = document.getElementById("roleFilter")?.value;
+    const date = document.getElementById("dateFilter")?.value;
+
+    const url = `/filter-tasks/?role=${role || ''}&date=${date || ''}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Filtered tasks:", data.tasks);
+            window.tasks = data.tasks; // update global list
+            renderTasks();
+            updateStatistics();
+        })
+        .catch(err => console.error("❌ Error fetching filtered tasks:", err));
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const bell = document.getElementById("notificationBtn");
+  const dropdown = document.getElementById("notificationDropdown");
+
+  if (bell && dropdown) {
+    bell.addEventListener("click", () => {
+      dropdown.classList.toggle("hidden");
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add("hidden");
+      }
+    });
+  }
+});
+</script>
+
+
+
+</body>
+
+</html>

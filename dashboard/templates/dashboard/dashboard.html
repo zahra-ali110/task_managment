@@ -4,45 +4,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - TaskFlow</title>
+    <title>Dashboard - Bitrix24 Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Added custom CSS file for professional styling -->
-    <link href="css/styles.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3b82f6',
-                        secondary: '#1e40af',
-                        accent: '#06b6d4',
-                        dark: '#1f2937',
-                        'dark-light': '#374151'
-                    }
-                }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Updated to use colorful flower background image like Bitrix24 */
+        body {
+            background: url('https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80') center/cover fixed;
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Removed overlay to show flowers more clearly */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Changed to solid white cards with stronger shadows to stand out */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Made sidebar much more transparent to show flower background */
+        .sidebar-gradient {
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.25) 0%, rgba(124, 58, 237, 0.25) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Active sidebar item with glow */
+        .sidebar-item-active {
+            background: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #60a5fa;
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        /* Made header more transparent to show flower background */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Updated button styles with green/blue accent colors */
+        .btn-glass {
+            background: rgba(34, 197, 94, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-glass:hover {
+            background: rgba(34, 197, 94, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-blue {
+            background: rgba(59, 130, 246, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background: rgba(59, 130, 246, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Pastel badges */
+        .badge-pastel {
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Chart container with solid white background */
+        .chart-glass {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 1rem;
+        }
+
+        /* Input glass effect */
+        .input-glass {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .input-glass:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Team card with solid white background */
+        .team-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .team-card:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Table with solid white background */
+        .table-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .table-row-glass {
+            transition: all 0.2s ease;
+        }
+
+        .table-row-glass:hover {
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.7);
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar-gradient {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar-gradient.active {
+                transform: translateX(0);
             }
         }
-    </script>
-
+    </style>
 </head>
 
-<body class="bg-gray-50">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
+<body class="min-h-screen">
+    <div class="flex h-screen relative z-10">
+        <!-- Vertical Sidebar with Gradient -->
         <div id="sidebar"
-            class="sidebar bg-dark text-white w-64 min-h-screen p-4 transition-transform duration-300 ease-in-out fixed lg:relative z-50 -translate-x-full lg:translate-x-0">
-            <div class="flex items-center mb-8">
-                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center mr-3 hover-scale">
-                    <i class="fas fa-tasks text-white"></i>
-                </div>
-                <h1 class="text-xl font-bold">Adminto</h1>
-            </div>
+            class="sidebar-gradient text-white w-64 min-h-screen p-6 fixed lg:relative z-50 transition-transform duration-300">
+            
+            <!-- Logo -->
+             <div class="flex items-center mb-8">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+          <i class="fas fa-tasks text-white"></i>
+        </div>
+        <h1 class="text-xl font-bold">Adminto</h1>
+      </div>
 
-            <div class="mb-8">
-                <div class="flex items-center mb-4 p-3 rounded-lg hover:bg-dark-light/30 transition-all duration-200">
-                    <img src="public/thoughtful-man.png" alt="User" class="w-10 h-10 rounded-full mr-3 hover-scale">
+            <!-- User Profile -->
+            <div class="mb-8 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+                <div class="flex items-center">
+                    <img src="https://i.pravatar.cc/150?img=12" alt="User" class="w-12 h-12 rounded-full mr-3 border-2 border-white/30">
                     <div>
                         <p><span class="font-semibold">Name:</span> {{ name }}</p>
                         <p><span class="font-semibold">Role:</span> {{ role }}</p>
@@ -51,376 +227,321 @@
                 </div>
             </div>
 
+            <!-- Navigation -->
             <nav class="space-y-2">
-                <a href="dashboard.html"
-                    class="sidebar-nav-item active flex items-center px-4 py-3 text-white bg-primary rounded-lg">
-                    <i class="fas fa-tachometer-alt mr-3 icon"></i>
-                    Dashboard
+                <a href="dashboard.html" class="sidebar-item sidebar-item-active flex items-center px-4 py-3 text-white rounded-lg">
+                    <i class="fas fa-tachometer-alt mr-3 text-lg"></i>
+                    <span class="font-medium">Dashboard</span>
                 </a>
-                <a href="{% url 'projects:clients' %}"
-                 class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-project-diagram mr-3 icon"></i>
-                    Clients
+                <a href="{% url 'projects:clients' %}" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-tasks mr-3 text-lg"></i>
+                    <span class="font-medium">Clients</span>
                 </a>
-                <a href="{% url 'projects:projects' %}"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-project-diagram mr-3 icon"></i>
-                    Projects
+                <a href="{% url 'projects:projects' %}" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-project-diagram mr-3 text-lg"></i>
+                    <span class="font-medium">Projects</span>
                 </a>
-                <a href="{% url 'calendar' %}"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-calendar mr-3 icon"></i>
-                    Calendar
+                <a href="{% url 'calendar' %}" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-calendar mr-3 text-lg"></i>
+                    <span class="font-medium">Calendar</span>
                 </a>
-
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-users mr-3 icon"></i>
-                    Users
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-users mr-3 text-lg"></i>
+                    <span class="font-medium">Users</span>
                 </a>
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-envelope mr-3 icon"></i>
-                    Email
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-envelope mr-3 text-lg"></i>
+                    <span class="font-medium">Email</span>
                 </a>
-                <a href="#"
-                    class="sidebar-nav-item flex items-center px-4 py-3 text-gray-300 hover:text-white hover:bg-dark-light rounded-lg transition-colors">
-                    <i class="fas fa-folder mr-3 icon"></i>
-                    File Manager
+                <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+                    <i class="fas fa-folder mr-3 text-lg"></i>
+                    <span class="font-medium">File Manager</span>
                 </a>
             </nav>
-
         </div>
 
-
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
-            <!-- Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Glass Header -->
+            <header class="glass-header px-6 py-4 sticky top-0 z-40">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <button id="sidebar-toggle"
-                            class="text-gray-500 hover:text-gray-700 mr-4 lg:hidden transition-colors hover-scale">
+                        <button id="sidebar-toggle" class="text-white mr-4 lg:hidden hover:scale-110 transition">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
-                        <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+                        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
                     </div>
                     <div class="flex items-center space-x-4">
                         <div class="relative">
                             <input type="text" placeholder="Search something..."
-                                class="search-input bg-gray-100 border-0 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-primary">
-                            <i class="search-icon fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                class="input-glass text-white placeholder-white/60 rounded-xl px-4 py-2 pl-10 focus:outline-none w-64">
+                            <i class="fas fa-search absolute left-3 top-3 text-white/60"></i>
                         </div>
-                        <button class="text-gray-500 hover:text-gray-700 hover-scale">
-                            <i class="fas fa-bell text-xl"></i>
+                        <button class="btn-blue text-white p-2 rounded-lg hover:scale-110 transition">
+                            <i class="fas fa-bell text-lg"></i>
                         </button>
-                        <div class="flex items-center hover-lift cursor-pointer p-2 rounded-lg">
-                            <img src="public/thoughtful-man.png" alt="User" class="w-8 h-8 rounded-full">
-                            <span class="text-sm font-medium text-gray-700">{{ name }}</span>
-                        </div>
+                       <a href="{% url 'profile' %}" class="flex items-center btn-blue px-3 py-2 rounded-lg cursor-pointer">
+    <img src="https://i.pravatar.cc/150?img=12" alt="User" class="w-8 h-8 rounded-full mr-2">
+    <span class="text-sm font-medium text-white">{{ name }}</span>
+</a>
+
                     </div>
                 </div>
             </header>
 
             <!-- Dashboard Content -->
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-                <!-- Stats Cards -->
-                <div id="dashboardView">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
-                        <!-- Total Orders Card -->
-                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
-                            <div class="card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-600">Total Orders</p>
-                                        <p class="text-2xl font-bold text-gray-900">687.3k</p>
-                                        <p class="text-sm text-gray-500">Since last month</p>
-                                    </div>
-                                    <div class="w-16 h-16">
-                                        <canvas id="ordersChart"></canvas>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <span class="status-badge bg-red-100 text-red-800">
-                                        -2.1%
-                                    </span>
-                                </div>
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Stats Cards with Glassmorphism -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    
+                    <!-- Total Orders -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">687.3k</p>
+                            </div>
+                            <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-shopping-cart text-2xl text-blue-600"></i>
                             </div>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-gray-500">Since last month</p>
+                            <span class="badge-pastel px-3 py-1 rounded-full text-xs font-semibold text-red-600 bg-red-100">
+                                -2.1%
+                            </span>
+                        </div>
+                    </div>
 
-                        <!-- Total Revenue Card -->
-                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
-                            <div class="card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                                        <p class="text-2xl font-bold text-gray-900">$5.42M</p>
-                                        <p class="text-sm text-gray-500">Since last month</p>
-                                    </div>
-                                    <div class="w-16 h-16">
-                                        <canvas id="revenueChart"></canvas>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <span class="status-badge bg-green-100 text-green-800">
-                                        +8.2%
-                                    </span>
-                                </div>
+                    <!-- Total Revenue -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">$5.42M</p>
+                            </div>
+                            <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-dollar-sign text-2xl text-green-600"></i>
                             </div>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-gray-500">Since last month</p>
+                            <span class="badge-pastel px-3 py-1 rounded-full text-xs font-semibold text-green-600 bg-green-100">
+                                +8.2%
+                            </span>
+                        </div>
+                    </div>
 
-                        <!-- New Users Card -->
-                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
-                            <div class="card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-600">New Users</p>
-                                        <p class="text-2xl font-bold text-gray-900">45.3k</p>
-                                        <p class="text-sm text-gray-500">Since last month</p>
-                                    </div>
-                                    <div class="w-16 h-16">
-                                        <canvas id="usersChart"></canvas>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <span class="status-badge bg-yellow-100 text-yellow-800">
-                                        +1.2%
-                                    </span>
-                                </div>
+                    <!-- New Users -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">New Users</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">45.3k</p>
+                            </div>
+                            <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-users text-2xl text-purple-600"></i>
                             </div>
                         </div>
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-gray-500">Since last month</p>
+                            <span class="badge-pastel px-3 py-1 rounded-full text-xs font-semibold text-yellow-600 bg-yellow-100">
+                                +1.2%
+                            </span>
+                        </div>
+                    </div>
 
-                        <!-- Customer Satisfaction Card -->
-                        <div class="card bg-white rounded-xl shadow hover:shadow-lg transition p-4">
-                            <div class="card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-600">Customer Satisfaction</p>
-                                        <p class="text-2xl font-bold text-gray-900">94.3%</p>
-                                        <p class="text-sm text-gray-500">Since last month</p>
-                                    </div>
-                                    <div class="w-16 h-16">
-                                        <canvas id="satisfactionChart"></canvas>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <span class="status-badge bg-blue-100 text-blue-800">
-                                        +3.1%
-                                    </span>
-                                </div>
+                    <!-- Customer Satisfaction -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Satisfaction</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1">94.3%</p>
+                            </div>
+                            <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-smile text-2xl text-blue-600"></i>
                             </div>
                         </div>
-
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-gray-500">Since last month</p>
+                            <span class="badge-pastel px-3 py-1 rounded-full text-xs font-semibold text-blue-600 bg-blue-100">
+                                +3.1%
+                            </span>
+                        </div>
                     </div>
                 </div>
-
-
 
                 <!-- Charts Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 justify-center">
-
-                    <!-- Orders Statistics Card -->
-                    <div class="card hover-lift max-w-md w-full mx-auto bg-white rounded-xl shadow p-4">
-                        <div class="card-header">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-900">Orders Statistics</h3>
-                                <button class="text-gray-400 hover:text-gray-600 hover-scale">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="h-64 flex items-center justify-center">
-                                <canvas id="ordersDonutChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Statistics Card -->
-                    <div class="card hover-lift max-w-md w-full mx-auto bg-white rounded-xl shadow p-4">
-                        <div class="card-header">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-900">Statistics</h3>
-                                <button class="text-gray-400 hover:text-gray-600 hover-scale">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="h-64 flex items-center justify-center">
-                                <canvas id="statisticsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-
-
-                <!-- Team Members -->
-                <div class="card hover-lift mb-8">
-                    <div class="card-header">
-                        <h3 class="text-lg font-semibold text-gray-900">Team Members</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-
-                            <!-- John -->
-                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
-                                <img src="public/thoughtful-man.png" alt="John Smith"
-                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
-                                <h4 class="font-medium text-gray-900">John Smith</h4>
-                                <p class="text-sm text-gray-500">Project Manager</p>
-                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">80+ Feedbacks →
-                                </p>
-                            </div>
-
-                            <!-- Jane -->
-                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
-                                <img src="public/diverse-woman-portrait.png" alt="Jane Doe"
-                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
-                                <h4 class="font-medium text-gray-900">Jane Doe</h4>
-                                <p class="text-sm text-gray-500">UI/UX Manager</p>
-                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">90+ Feedbacks →
-                                </p>
-                            </div>
-
-                            <!-- Emily -->
-                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
-                                <img src="public/diverse-group-friends.png" alt="Emily Brown"
-                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
-                                <h4 class="font-medium text-gray-900">Emily Brown</h4>
-                                <p class="text-sm text-gray-500">Software Engineer</p>
-                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">100+ Feedbacks
-                                    →</p>
-                            </div>
-
-                            <!-- Mark -->
-                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
-                                <img src="public/diverse-group-women.png" alt="Mark Wilson"
-                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
-                                <h4 class="font-medium text-gray-900">Mark Wilson</h4>
-                                <p class="text-sm text-gray-500">Marketing Specialist</p>
-                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">70+ Feedbacks →
-                                </p>
-                            </div>
-
-                            <!-- Sara -->
-                            <div class="bg-white rounded-xl shadow-md p-4 text-center hover-lift cursor-pointer">
-                                <img src="public/thoughtful-man.png" alt="Sara Johnson"
-                                    class="w-16 h-16 rounded-full mx-auto mb-3 hover-scale">
-                                <h4 class="font-medium text-gray-900">Sara Johnson</h4>
-                                <p class="text-sm text-gray-500">Data Analyst</p>
-                                <p class="text-sm text-primary font-medium mt-1 hover:text-primary-dark">50+ Feedbacks →
-                                </p>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-
-
-                <!-- Brand Listing -->
-                <div class="card hover-lift bg-white rounded-xl shadow-md">
-                    <div class="card-header">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">Brand Listing</h3>
-                            <button class="btn btn-ghost text-primary hover:text-secondary font-medium">
-                                Add Brand +
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    
+                    <!-- Orders Statistics -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Orders Statistics</h3>
+                            <button class="btn-blue text-white p-2 rounded-lg">
+                                <i class="fas fa-ellipsis-h"></i>
                             </button>
                         </div>
+                        <div class="chart-glass h-64">
+                            <canvas id="ordersDonutChart"></canvas>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Brand</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Since</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Products</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <tr class="table-row">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div
-                                                    class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3 hover-scale">
-                                                    <span class="text-white font-bold text-sm">T</span>
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900">TechNova - Germany
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Since 2015</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1,200</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15,350</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="status-badge status-completed">Active</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button class="text-gray-400 hover:text-gray-600 hover-scale">
-                                                <i class="fas fa-ellipsis-h"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr class="table-row">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div
-                                                    class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3 hover-scale">
-                                                    <span class="text-white font-bold text-sm">D</span>
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-medium text-gray-900">DevLux - France</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Since 2000</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">450</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">6,800</td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="status-badge status-planned">Pending</span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button class="text-gray-400 hover:text-gray-600 hover-scale">
-                                                <i class="fas fa-ellipsis-h"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- Statistics Chart -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Statistics</h3>
+                            <button class="btn-blue text-white p-2 rounded-lg">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <div class="chart-glass h-64">
+                            <canvas id="statisticsChart"></canvas>
                         </div>
                     </div>
                 </div>
 
+                <!-- Team Members -->
+                <div class="glass-card rounded-2xl p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Team Members</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        
+                        <div class="team-card rounded-xl p-4 text-center cursor-pointer">
+                            <img src="https://i.pravatar.cc/150?img=12" alt="John Smith"
+                                class="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200">
+                            <h4 class="font-semibold text-gray-900">John Smith</h4>
+                            <p class="text-sm text-gray-600 mb-2">Project Manager</p>
+                            <p class="text-xs text-blue-600 font-medium">80+ Feedbacks →</p>
+                        </div>
+
+                        <div class="team-card rounded-xl p-4 text-center cursor-pointer">
+                            <img src="https://i.pravatar.cc/150?img=45" alt="Jane Doe"
+                                class="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200">
+                            <h4 class="font-semibold text-gray-900">Jane Doe</h4>
+                            <p class="text-sm text-gray-600 mb-2">UI/UX Manager</p>
+                            <p class="text-xs text-blue-600 font-medium">90+ Feedbacks →</p>
+                        </div>
+
+                        <div class="team-card rounded-xl p-4 text-center cursor-pointer">
+                            <img src="https://i.pravatar.cc/150?img=32" alt="Emily Brown"
+                                class="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200">
+                            <h4 class="font-semibold text-gray-900">Emily Brown</h4>
+                            <p class="text-sm text-gray-600 mb-2">Software Engineer</p>
+                            <p class="text-xs text-blue-600 font-medium">100+ Feedbacks →</p>
+                        </div>
+
+                        <div class="team-card rounded-xl p-4 text-center cursor-pointer">
+                            <img src="https://i.pravatar.cc/150?img=68" alt="Mark Wilson"
+                                class="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200">
+                            <h4 class="font-semibold text-gray-900">Mark Wilson</h4>
+                            <p class="text-sm text-gray-600 mb-2">Marketing Specialist</p>
+                            <p class="text-xs text-blue-600 font-medium">70+ Feedbacks →</p>
+                        </div>
+
+                        <div class="team-card rounded-xl p-4 text-center cursor-pointer">
+                            <img src="https://i.pravatar.cc/150?img=49" alt="Sara Johnson"
+                                class="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200">
+                            <h4 class="font-semibold text-gray-900">Sara Johnson</h4>
+                            <p class="text-sm text-gray-600 mb-2">Data Analyst</p>
+                            <p class="text-xs text-blue-600 font-medium">50+ Feedbacks →</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brand Listing Table -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Brand Listing</h3>
+                        <button class="btn-glass text-white px-4 py-2 rounded-lg font-medium">
+                            Add Brand +
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Brand</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Since</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Products</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-row-glass border-b border-gray-100">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                                <span class="text-blue-600 font-bold">T</span>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900">TechNova - Germany</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Since 2015</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">1,200</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">15,350</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold text-green-600 bg-green-100">
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-gray-500 hover:text-gray-900 transition">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="table-row-glass border-b border-gray-100">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                                <span class="text-purple-600 font-bold">D</span>
+                                            </div>
+                                            <span class="text-sm font-medium text-gray-900">DevLux - France</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Since 2000</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">450</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">6,800</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold text-yellow-600 bg-yellow-100">
+                                            Pending
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-gray-500 hover:text-gray-900 transition">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
 
     <!-- Mobile Sidebar Overlay -->
-    <div id="sidebar-overlay"
-        class="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden transition-opacity duration-300">
-    </div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden hidden"></div>
+
     <script>
+        // Sidebar Toggle for Mobile
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        sidebarToggle?.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('hidden');
+        });
+
+        overlay?.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.add('hidden');
+        });
+
         // Orders Donut Chart
         const ordersCtx = document.getElementById('ordersDonutChart').getContext('2d');
         new Chart(ordersCtx, {
@@ -429,21 +550,29 @@
                 labels: ['Completed', 'Pending', 'Cancelled'],
                 datasets: [{
                     data: [65, 20, 15],
-                    backgroundColor: ['#22c55e', '#facc15', '#ef4444'],
+                    backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(250, 204, 21, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                    borderColor: ['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.3)'],
                     borderWidth: 2,
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom',
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            font: {
+                                size: 12
+                            }
+                        }
                     }
                 }
             }
         });
 
-        // Line Chart for Statistics
+        // Statistics Line Chart
         const statsCtx = document.getElementById('statisticsChart').getContext('2d');
         new Chart(statsCtx, {
             type: 'line',
@@ -452,24 +581,53 @@
                 datasets: [{
                     label: 'Users',
                     data: [10, 25, 30, 40, 35, 50],
-                    borderColor: '#3B82F6',
+                    borderColor: 'rgba(59, 130, 246, 0.9)',
                     backgroundColor: 'rgba(59, 130, 246, 0.2)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    pointBorderColor: 'rgba(59, 130, 246, 0.9)',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: true,
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
                     }
                 }
             }
         });
     </script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/dashboard.js"></script>
 </body>
 
 </html>

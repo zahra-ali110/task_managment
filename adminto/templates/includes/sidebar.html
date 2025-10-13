@@ -1,0 +1,43 @@
+<!-- adminto/templates/includes/sidebar.html -->
+<nav class="space-y-2">
+
+    <a href="{% url 'dashboard:home' %}"
+       class="sidebar-item flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'home' %}sidebar-item-active text-white{% else %}text-white/90{% endif %}">
+        <i class="fas fa-tachometer-alt mr-3 text-lg"></i>
+        <span class="font-medium">Dashboard</span>
+    </a>
+
+    <a href="{% url 'projects:clients' %}"
+       class="sidebar-item flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'clients' %}sidebar-item-active text-white{% else %}text-white/90{% endif %}">
+        <i class="fas fa-tasks mr-3 text-lg"></i>
+        <span class="font-medium">Clients</span>
+    </a>
+
+    <a href="{% url 'projects:projects' %}"
+       class="sidebar-item flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'projects' %}sidebar-item-active text-white{% else %}text-white/90{% endif %}">
+        <i class="fas fa-project-diagram mr-3 text-lg"></i>
+        <span class="font-medium">Projects</span>
+    </a>
+
+    <a href="{% url 'dashboard:calendar' %}"
+       class="sidebar-item flex items-center px-4 py-3 rounded-lg {% if request.resolver_match.url_name == 'calendar' %}sidebar-item-active text-white{% else %}text-white/90{% endif %}">
+        <i class="fas fa-calendar mr-3 text-lg"></i>
+        <span class="font-medium">Calendar</span>
+    </a>
+
+    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+        <i class="fas fa-users mr-3 text-lg"></i>
+        <span class="font-medium">Users</span>
+    </a>
+
+    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+        <i class="fas fa-envelope mr-3 text-lg"></i>
+        <span class="font-medium">Email</span>
+    </a>
+
+    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-white/90 rounded-lg">
+        <i class="fas fa-folder mr-3 text-lg"></i>
+        <span class="font-medium">File Manager</span>
+    </a>
+
+</nav>

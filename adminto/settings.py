@@ -117,6 +117,21 @@ USE_I18N = True
 
 USE_TZ = True
 
+# ✅ Gmail SMTP Email Settings (REAL emails)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Your Gmail address (sender email)
+EMAIL_HOST_USER = "shiza8961@gmail.com"
+
+# Your Gmail App Password (NOT your real Gmail password)
+EMAIL_HOST_PASSWORD = "rpaj gqji xwga ufbi"
+
+# Default sender for emails
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -127,3 +142,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Media files (for user uploads like profile pictures)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Static files
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # optional, since you have /static folder

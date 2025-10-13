@@ -48,5 +48,6 @@ path("task/<int:pk>/", views.task_detail, name="task_detail"),
 
 # SUBTASK ROUTES
 path("subtask/<int:pk>/", views.subtask_detail, name="subtask_detail"),
+path("dashboard/", views.dashboard_view, name="dashboard"),  # Dashboard
 
 ]

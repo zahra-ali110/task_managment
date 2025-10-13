@@ -139,6 +139,7 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.title} → {self.epic.title}"
+    
 class SubTask(models.Model):
     PRIORITY_CHOICES = [
         ("low", "Low"),
@@ -157,11 +158,11 @@ class SubTask(models.Model):
     deadline = models.DateField(blank=True, null=True)
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="medium")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    estimated_time = models.DecimalField(max_digits=6, decimal_places=2, default=0)  # supports larger hours
-    time_tracked = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    estimated_time = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    time_tracked = models.DecimalField(max_digits=5, decimal_places=2, default=0)
 
-    task = models.ForeignKey("Task", on_delete=models.CASCADE, related_name="subtasks")
-    assigned_users = models.ManyToManyField("accounts.Profile", related_name="subtasks", blank=True)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="subtasks")
+    assigned_users = models.ManyToManyField(Profile, related_name="subtasks", blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -170,40 +171,29 @@ class SubTask(models.Model):
     def completed(self):
         return self.status == "completed"
 
-    # ---------- Helpers ----------
-    # Convert total hours → readable days + hours + minutes
-    def _format_time(self, total_hours):
-        total_minutes = int(round(total_hours * 60))
-        days = total_minutes // (24 * 60)
-        hours = (total_minutes % (24 * 60)) // 60
-        minutes = total_minutes % 60
-
-        parts = []
-        if days:
-            parts.append(f"{days}d")
-        if hours:
-            parts.append(f"{hours}h")
-        if minutes:
-            parts.append(f"{minutes}m")
-        if not parts:
-            parts.append("0h")
-        return " ".join(parts)
-
-    # ---------- Display properties ----------
-    # Estimated time display: show only days (minimum 1 day)
+    # ✅ Display estimated time properly (supports hours + days)
     @property
     def estimated_time_display(self):
+        """Show estimated time as 'Xd Yh' if >= 24h, otherwise 'Xh'."""
         total_hours = float(self.estimated_time or 0)
-        days = max(1, int(total_hours // 24))  # always at least 1 day
-        return f"{days}d"
+        if total_hours >= 24:
+            days = int(total_hours // 24)
+            hours = int(total_hours % 24)
+            return f"{days}d {hours}h" if hours else f"{days}d"
+        return f"{int(total_hours)}h"
 
-    # Time tracked display: full readable format
+    # ✅ Display time tracked properly (supports hours + days)
     @property
     def time_tracked_display(self):
+        """Show 'Today' if 0h, or 'Xd Yh' if >= 24h."""
         total_hours = float(self.time_tracked or 0)
         if total_hours == 0:
             return "Today"
-        return self._format_time(total_hours)
+        if total_hours >= 24:
+            days = int(total_hours // 24)
+            hours = int(total_hours % 24)
+            return f"{days}d {hours}h" if hours else f"{days}d"
+        return f"{int(total_hours)}h"
 
     def __str__(self):
         return f"{self.title} → {self.task.title}"

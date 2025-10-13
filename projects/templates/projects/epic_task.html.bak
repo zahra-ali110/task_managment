@@ -345,7 +345,7 @@
                             data-description="{{ subtask.description }}" data-deadline="{{ subtask.deadline }}"
                             data-priority="{{ subtask.priority }}" data-status="{{ subtask.status }}"
                             data-assigned="{% for u in subtask.assigned_users.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% endfor %}"
-                            data-time_estimated="{{ subtask.estimated_time_display|default:'1d' }}"
+                            data-time_estimated="{{ subtask.estimated_time }}"
                             data-time_tracked="{{ subtask.time_tracked }}">
                             {{ subtask.title }}
                           </span>
@@ -372,27 +372,19 @@
                         </p>
                         {% endif %}
                       </div>
-           <div class="mt-2 ml-6 w-[20%]">
+                      <!-- Progress Bar -->
+<div class="mt-2 ml-6 w-[20%]">
   <div
     class="h-2 bg-gray-200 rounded-full overflow-hidden relative progress-bar-container"
-    data-subtask-id="{{ subtask.id }}"
     data-estimated="{{ subtask.estimated_time }}"
     data-tracked="{{ subtask.time_tracked }}"
   >
-    <!-- ✅ Green fill (on time) -->
-    <div class="h-2 bg-green-500 progress-bar-fill absolute left-0 top-0 transition-all duration-500 ease-out"></div>
-
-    <!-- ✅ Red fill (overdue portion) -->
-    <div class="h-2 bg-red-500 progress-bar-overdue absolute left-0 top-0 transition-all duration-500 ease-out"></div>
+    <div class="h-2 bg-green-500 progress-bar-fill transition-all duration-500"></div>
   </div>
-
-  <!-- ✅ Display time info -->
-  <div class="text-xs text-gray-500 mt-1 time-info">
-    {{ subtask.time_tracked_display }} tracked / {{ subtask.estimated_time_display }} estimated
+  <div class="text-xs text-gray-500 mt-1">
+    {{ subtask.time_tracked }}h tracked / {{ subtask.estimated_time }}h estimated
   </div>
 </div>
-
-
 
                     </div>
                     {% empty %}
@@ -495,11 +487,9 @@
                           <input type="hidden" name="subtask_id" id="timeTrackSubTaskId">
 
                           <label class="block text-sm font-medium text-gray-700 mb-1">Time Spent (hours)</label>
-                          <input type="text" name="time_tracked" id="timeTrackedInput"
+                          <input type="number" name="time_tracked" id="timeTrackedInput"
        class="w-full border rounded-lg p-2 mb-4"
-       placeholder="Enter: 1.5 | 1:30 | 1:30pm | 1d 3h | 1.5d" required>
-<div id="formattedTimeDisplay" class="text-sm text-gray-500 mt-1"></div>
-
+       placeholder="Enter hours (e.g. 1.5)" min="0" step="0.01" required>
 
                           <div class="flex justify-end gap-2">
                             <button type="button" id="cancelTimeTrack"
@@ -681,132 +671,20 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // ---------- New helpers: parse & format ------------
-
-  // parse many formats into decimal hours (Number)
-  function parseTimeInputToHours(raw) {
-    if (raw === null || raw === undefined) return 0;
-    let s = String(raw).trim().toLowerCase();
-    if (s === "") return 0;
-
-    // 1) days/hours/minutes tokens like "1d 2h 10m" or "2h 10m" or "90m"
-    const dMatch = /(\d+(\.\d+)?)\s*d/.exec(s);
-    const hMatch = /(\d+(\.\d+)?)\s*h/.exec(s);
-    const mMatch = /(\d+)\s*m/.exec(s);
-
-    if (dMatch || hMatch || mMatch) {
-      const days = dMatch ? parseFloat(dMatch[1]) : 0;
-      const hours = hMatch ? parseFloat(hMatch[1]) : 0;
-      const mins = mMatch ? parseInt(mMatch[1], 10) : 0;
-      const total = days * 24 + hours + mins / 60;
-      return Number(total.toFixed(2));
+  // ---------- Helpers ----------
+  function formatEstimatedTime(hours) {
+    if (hours === null || hours === undefined || isNaN(Number(hours))) return "0h";
+    const h = Number(hours);
+    if (h >= 24) {
+      const days = Math.round((h / 24) * 10) / 10; // one decimal
+      return `${days}d`;
     }
-
-    // 2) H:MM or H.MM optionally with am/pm (we interpret H:MM as duration; am/pm can be converted to a 24h number)
-    const colon = /^(\d{1,2})[:\.](\d{1,2})(?:\s*(am|pm))?$/.exec(s);
-    if (colon) {
-      let h = parseInt(colon[1], 10);
-      const min = parseInt(colon[2], 10);
-      const ampm = colon[3];
-      if (ampm) {
-        // treat as clock time -> convert to hours since midnight
-        if (ampm === "pm" && h !== 12) h += 12;
-        if (ampm === "am" && h === 12) h = 0;
-        return Number((h + min / 60).toFixed(2));
-      }
-      // interpret as duration H:MM
-      return Number((h + min / 60).toFixed(2));
-    }
-
-    // 3) minutes only like "90m"
-    const onlyMinutes = /^(\d+)\s*m$/.exec(s);
-    if (onlyMinutes) {
-      const mins = parseInt(onlyMinutes[1], 10);
-      return Number((mins / 60).toFixed(2));
-    }
-
-    // 4) decimal days like "1.5d"
-    const decimalDays = /^(\d+(\.\d+)?)\s*d$/.exec(s);
-    if (decimalDays) {
-      return Number((parseFloat(decimalDays[1]) * 24).toFixed(2));
-    }
-
-    // 5) decimal hours like "1.5h" or plain number "1.5"
-    const decimalHours = /^(\d+(\.\d+)?)\s*h$/.exec(s) || /^(\d+(\.\d+)?)$/.exec(s);
-    if (decimalHours) {
-      return Number(parseFloat(decimalHours[1]).toFixed(2));
-    }
-
-    // fallback
-    const n = parseFloat(s);
-    return isNaN(n) ? null : Number(n.toFixed(2));
+    return `${h.toFixed(1)}h`;
   }
-
-  // format a decimal-hours number into "Xd Yh Zm" (or "Today" if zero)
-  function formatHoursToDHM(hours) {
-    const h = Number(hours) || 0;
-    const totalMinutes = Math.round(h * 60);
-    if (totalMinutes === 0) return "Today";
-
-    const days = Math.floor(totalMinutes / (24 * 60));
-    let rem = totalMinutes % (24 * 60);
-    const hrs = Math.floor(rem / 60);
-    const mins = rem % 60;
-
-    const parts = [];
-    if (days) parts.push(`${days}d`);
-    if (hrs) parts.push(`${hrs}h`);
-    if (mins) parts.push(`${mins}m`);
-    return parts.join(" ");
+  function formatTrackedTime(hours) {
+    if (hours === null || hours === undefined || isNaN(Number(hours))) return "0h";
+    return `${Number(hours).toFixed(1)}h`;
   }
-
- // ---------- Progress bar helper (updated: green + red logic) ----------
-function updateSubtaskBarsForContainer(container) {
-  if (!container) return;
-
-  const estimated = parseFloat(container.dataset.estimated || 0);
-  const tracked = parseFloat(container.dataset.tracked || 0);
-  const greenFill = container.querySelector(".progress-bar-fill");
-  const redFill = container.querySelector(".progress-bar-overdue");
-
-  if (!greenFill || !redFill) return;
-
-  // Reset widths
-  greenFill.style.width = "0%";
-  redFill.style.width = "0%";
-
-  if (estimated <= 0) return;
-
-  const ratio = tracked / estimated;
-  const greenPercent = Math.min(ratio * 100, 100);
-  const redPercent = ratio > 1 ? (ratio - 1) * 100 : 0;
-
-  // Apply widths
-  greenFill.style.width = `${greenPercent}%`;
-  redFill.style.left = `${greenPercent}%`;
-  redFill.style.width = `${redPercent}%`;
-
-  // Optional: smooth transition colors
-  greenFill.classList.remove("bg-red-500");
-  greenFill.classList.add("bg-green-500");
-  redFill.classList.add("bg-red-500");
-}
-
-// ---------- Initialize all bars & text on load ----------
-document.querySelectorAll(".progress-bar-container").forEach(container => {
-  updateSubtaskBarsForContainer(container);
-  try {
-    const row = container.closest("[id^='subtask-']");
-    if (row) {
-      const info = row.querySelector(".time-info");
-      if (info) {
-        const tracked = parseFloat(container.dataset.tracked || 0);
-        const est = parseFloat(container.dataset.estimated || 0);
-        info.textContent = `${formatHoursToDHM(tracked)} tracked / ${formatHoursToDHM(est)} estimated`;
-      }
-    }
-  } catch (e) { /* ignore */ }
-});
 
   // ---------- Modal elements ----------
   const modal = document.getElementById("timeTrackModal");
@@ -814,21 +692,8 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
   const cancelBtn = document.getElementById("cancelTimeTrack");
   const input = document.getElementById("timeTrackedInput");
   const modalSubtaskId = document.getElementById("timeTrackSubTaskId");
-  const formattedTimeDisplay = document.getElementById("formattedTimeDisplay");
 
-  // live preview on input (shows "1d 1h 10m")
-  if (input) {
-    input.addEventListener("input", () => {
-      const parsed = parseTimeInputToHours(input.value);
-      if (parsed === null) {
-        if (formattedTimeDisplay) formattedTimeDisplay.textContent = "Invalid format";
-      } else {
-        if (formattedTimeDisplay) formattedTimeDisplay.textContent = formatHoursToDHM(parsed);
-      }
-    });
-  }
-
-  // Open modal when subtask checkbox changed (existing code kept)
+  // Open modal when subtask checkbox changed
   document.querySelectorAll(".toggleSubTaskCompletion").forEach(checkbox => {
     checkbox.addEventListener("change", function (e) {
       e.stopPropagation();
@@ -837,18 +702,6 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
         modal.classList.remove("hidden");
         modal.classList.add("flex");
         modalSubtaskId.value = this.dataset.subtaskId;
-        // prefill input preview with current tracked value
-        const subtaskRow = document.getElementById(`subtask-${this.dataset.subtaskId}`);
-        if (subtaskRow) {
-          const bar = subtaskRow.querySelector(".progress-bar-container");
-          if (bar && input) {
-            input.value = ''; // keep empty to encourage new entry (we add instead of overwrite)
-            if (formattedTimeDisplay) {
-              const tracked = parseFloat(bar.dataset.tracked || 0);
-              formattedTimeDisplay.textContent = formatHoursToDHM(tracked);
-            }
-          }
-        }
       } else {
         this.checked = true;
       }
@@ -860,22 +713,15 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
     input.value = "";
-    if (formattedTimeDisplay) formattedTimeDisplay.textContent = "";
     const subtaskId = modalSubtaskId.value;
     const checkbox = document.querySelector(`.toggleSubTaskCompletion[data-subtask-id="${subtaskId}"]`);
     if (checkbox && !checkbox.disabled) checkbox.checked = false;
   });
 
-  // Submit handler: parse input -> decimal hours -> send -> update UI
   form.addEventListener("submit", e => {
     e.preventDefault();
     const subtaskId = modalSubtaskId.value;
-    const parsedHours = parseTimeInputToHours(input.value);
-
-    if (parsedHours === null) {
-      alert("Invalid time format. Use like '1d 2h 30m', '2h 30m', '1:30', '90m' or '1.5h'.");
-      return;
-    }
+    const hours = input.value;
 
     fetch(`/projects/subtask/${subtaskId}/track-time/`, {
       method: "POST",
@@ -884,7 +730,7 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
         "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
       },
       body: new URLSearchParams({
-        "time_tracked": String(parsedHours),
+        "time_tracked": hours,
       })
     })
     .then(res => {
@@ -897,7 +743,6 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
         return;
       }
 
-      // mark checkbox completed UI
       const checkbox = document.querySelector(`.toggleSubTaskCompletion[data-subtask-id="${data.subtask_id}"]`);
       if (checkbox) {
         checkbox.disabled = true;
@@ -906,16 +751,14 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
         if (titleEl) titleEl.classList.add("line-through", "text-gray-400");
       }
 
-      // update sidebar values (use readable format)
       const sidebarTracked = document.getElementById("sidebarTimeTracked");
-      if (sidebarTracked) sidebarTracked.textContent = formatHoursToDHM(data.time_tracked);
+      if (sidebarTracked) sidebarTracked.textContent = formatTrackedTime(data.time_tracked);
 
       const sidebarStatus = document.getElementById("sidebarStatus");
       if (sidebarStatus && String(sidebarStatus.dataset.id) === String(data.subtask_id)) {
         sidebarStatus.textContent = data.status;
       }
 
-      // Task/Epic completion (same as before)
       if (data.task_completed) {
         const taskCheckbox = document.querySelector(`.toggleTaskCompletion[data-task-id="${data.task_id}"]`);
         if (taskCheckbox) {
@@ -935,96 +778,74 @@ document.querySelectorAll(".progress-bar-container").forEach(container => {
         }
       }
 
-      // --- NEW: update progress bar dataset + redraw + update the small text ---
-      const subtaskRow = document.getElementById(`subtask-${data.subtask_id}`);
-      if (subtaskRow) {
-        const bar = subtaskRow.querySelector(".progress-bar-container");
-        if (bar) {
-          bar.dataset.tracked = data.time_tracked;
-          updateSubtaskBarsForContainer(bar);
-        }
-
-        const info = subtaskRow.querySelector(".time-info");
-        if (info) {
-          const est = bar ? parseFloat(bar.dataset.estimated || 0) : 0;
-          info.textContent = `${formatHoursToDHM(data.time_tracked)} tracked / ${formatHoursToDHM(est)} estimated`;
-        }
-      }
-
-      // close modal and reset
       modal.classList.add("hidden");
       modal.classList.remove("flex");
       input.value = "";
-      if (formattedTimeDisplay) formattedTimeDisplay.textContent = "";
     })
     .catch(err => {
       console.error("❌ AJAX error:", err);
       alert("Error saving time (network).");
     });
   });
-// ---------- Sidebar and other existing handlers (unchanged) ----------
-const sidebar = document.getElementById("taskSidebar");
-const overlay = document.getElementById("sidebarOverlay");
-const closeBtn = document.getElementById("closeSidebar");
 
-function openSidebar(data) {
-  document.getElementById("sidebarTitle").textContent = data.title || "";
-  document.getElementById("sidebarDescription").textContent = data.description || "";
-  document.getElementById("sidebarDeadline").textContent = data.deadline || "";
-  document.getElementById("sidebarPriority").textContent = data.priority || "";
-  document.getElementById("sidebarStatus").textContent = data.status || "";
-  document.getElementById("sidebarStatus").dataset.id = data.id || "";
+  // ---------- Sidebar ----------
+  const sidebar = document.getElementById("taskSidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  const closeBtn = document.getElementById("closeSidebar");
 
-  const assigned = document.getElementById("sidebarAssigned");
-  if (assigned) {
-    assigned.innerHTML = "";
-    (data.assigned || "").split(",").forEach(user => {
-      if (user.trim() !== "") {
-        const span = document.createElement("span");
-        span.className = "inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full";
-        span.textContent = user.trim();
-        assigned.appendChild(span);
-      }
-    });
-  }
+  function openSidebar(data) {
+    document.getElementById("sidebarTitle").textContent = data.title || "";
+    document.getElementById("sidebarDescription").textContent = data.description || "";
+    document.getElementById("sidebarDeadline").textContent = data.deadline || "";
+    document.getElementById("sidebarPriority").textContent = data.priority || "";
+    document.getElementById("sidebarStatus").textContent = data.status || "";
+    document.getElementById("sidebarStatus").dataset.id = data.id || "";
 
-  // ✅ Fixed: Use formatted display ("25d" or "12h") instead of recalculating hours
-  const sidebarEstimated = document.getElementById("sidebarEstimatedTime");
-  if (sidebarEstimated) {
-    let estimatedDisplay = data.time_estimated;
+    const assigned = document.getElementById("sidebarAssigned");
+    if (assigned) {
+      assigned.innerHTML = "";
+      (data.assigned || "").split(",").forEach(user => {
+        if (user.trim() !== "") {
+          const span = document.createElement("span");
+          span.className = "inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full";
+          span.textContent = user.trim();
+          assigned.appendChild(span);
+        }
+      });
+    }
 
-    // if the dataset has numeric hours, convert them properly
-    if (estimatedDisplay && !isNaN(estimatedDisplay)) {
-      const hours = parseFloat(estimatedDisplay);
-      if (hours >= 24) {
-        const days = Math.floor(hours / 24);
-        const hrs = Math.floor(hours % 24);
-        estimatedDisplay = hrs > 0 ? `${days}d ${hrs}h` : `${days}d`;
-      } else {
-        estimatedDisplay = `${Math.floor(hours)}h`;
+    // ✅ Fix: calculate estimated time properly
+    let hoursForEstimated = 0;
+    if (data.time_estimated) {
+      hoursForEstimated = parseFloat(data.time_estimated);
+    } else if (data.deadline) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const deadline = new Date(data.deadline);
+      deadline.setHours(0, 0, 0, 0);
+
+      if (!isNaN(deadline)) {
+        const diffMs = deadline - today;
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) {
+          // deadline is today or passed
+          hoursForEstimated = 0;
+        } else {
+          hoursForEstimated = diffDays * 24;
+        }
       }
     }
 
-    sidebarEstimated.textContent = estimatedDisplay || "—";
-  }
+    const sidebarEstimated = document.getElementById("sidebarEstimatedTime");
+    if (sidebarEstimated) sidebarEstimated.textContent = formatEstimatedTime(hoursForEstimated);
 
-  const sidebarTrackedElement = document.getElementById("sidebarTimeTracked");
-  if (sidebarTrackedElement) {
-    const tracked = parseFloat(data.time_tracked || 0);
-    let trackedDisplay = "";
-    if (tracked >= 24) {
-      const days = Math.floor(tracked / 24);
-      const hrs = Math.floor(tracked % 24);
-      trackedDisplay = hrs > 0 ? `${days}d ${hrs}h` : `${days}d`;
-    } else {
-      trackedDisplay = `${Math.floor(tracked)}h`;
-    }
-    sidebarTrackedElement.textContent = trackedDisplay;
-  }
+    const sidebarTracked = document.getElementById("sidebarTimeTracked");
+    if (sidebarTracked) sidebarTracked.textContent = formatTrackedTime(data.time_tracked || 0);
 
-  sidebar.classList.remove("translate-x-full");
-  overlay.classList.remove("hidden");
-}
+    sidebar.classList.remove("translate-x-full");
+    overlay.classList.remove("hidden");
+  }
 
   document.querySelectorAll(".task-title, .epic-title, .subtask-title").forEach(title => {
     title.addEventListener("click", e => {
@@ -1045,7 +866,7 @@ function openSidebar(data) {
     overlay.classList.add("hidden");
   });
 
-  // Existing completion handlers (unchanged)...
+  // ---------- Task / Epic completion handlers ----------
   document.querySelectorAll(".toggleTaskCompletion").forEach(checkbox => {
     checkbox.addEventListener("change", function () {
       if (!(this.checked && !this.disabled)) { this.checked = true; return; }
@@ -1066,21 +887,21 @@ function openSidebar(data) {
               "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
             }
           })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                this.disabled = true;
-                const sidebarStatus = document.getElementById("sidebarStatus");
-                if (sidebarStatus && String(sidebarStatus.dataset.id) === String(taskId)) {
-                  sidebarStatus.textContent = "completed";
-                }
-                const taskTitle = document.querySelector(`.task-title[data-id="${taskId}"]`);
-                if (taskTitle) taskTitle.classList.add("line-through", "text-gray-400");
-              } else {
-                alert(data.error || "Could not complete task");
-                this.checked = false;
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              this.disabled = true;
+              const sidebarStatus = document.getElementById("sidebarStatus");
+              if (sidebarStatus && String(sidebarStatus.dataset.id) === String(taskId)) {
+                sidebarStatus.textContent = "completed";
               }
-            });
+              const taskTitle = document.querySelector(`.task-title[data-id="${taskId}"]`);
+              if (taskTitle) taskTitle.classList.add("line-through", "text-gray-400");
+            } else {
+              alert(data.error || "Could not complete task");
+              this.checked = false;
+            }
+          });
         });
     });
   });
@@ -1105,28 +926,27 @@ function openSidebar(data) {
               "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
             }
           })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                this.disabled = true;
-                const sidebarStatus = document.getElementById("sidebarStatus");
-                if (sidebarStatus && String(sidebarStatus.dataset.id) === String(epicId)) {
-                  sidebarStatus.textContent = "completed";
-                }
-                const epicTitle = document.querySelector(`.epic-title[data-id="${epicId}"]`);
-                if (epicTitle) epicTitle.classList.add("line-through", "text-gray-400");
-              } else {
-                alert(data.error || "Could not complete epic");
-                this.checked = false;
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              this.disabled = true;
+              const sidebarStatus = document.getElementById("sidebarStatus");
+              if (sidebarStatus && String(sidebarStatus.dataset.id) === String(epicId)) {
+                sidebarStatus.textContent = "completed";
               }
-            });
+              const epicTitle = document.querySelector(`.epic-title[data-id="${epicId}"]`);
+              if (epicTitle) epicTitle.classList.add("line-through", "text-gray-400");
+            } else {
+              alert(data.error || "Could not complete epic");
+              this.checked = false;
+            }
+          });
         });
     });
   });
 
 }); // DOMContentLoaded
 </script>
-
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -1163,184 +983,31 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  /***************************************************************************
-   * Helper: format decimal hours (e.g. 25.17) -> "1d 1h 10m" or "12h" or "Today"
-   ***************************************************************************/
-  function formatHoursToDHM(hours) {
-    const h = Number(hours) || 0;
-    const totalMinutes = Math.round(h * 60);
-    if (totalMinutes === 0) return "Today";
-
-    const days = Math.floor(totalMinutes / (24 * 60));
-    let rem = totalMinutes % (24 * 60);
-    const hrs = Math.floor(rem / 60);
-    const mins = rem % 60;
-
-    const parts = [];
-    if (days) parts.push(`${days}d`);
-    if (hrs) parts.push(`${hrs}h`);
-    if (mins) parts.push(`${mins}m`);
-    return parts.join(" ");
-  }
-
-  /***************************************************************************
-   * Core: updateSubtaskBarsForContainer(container)
-   *
-   * Rules:
-   * - container.dataset.estimated  => hours (number)
-   * - container.dataset.tracked    => hours (number)
-   *
-   * Visual behaviour:
-   * - If estimated <= 0:
-   *     - If tracked > 0 => full red (no estimate, all tracked is overdue)
-   *     - else => both 0
-   * - If tracked <= estimated:
-   *     - green = (tracked / estimated) * 100
-   *     - red = 0
-   * - If tracked > estimated:
-   *     - green = (estimated / tracked) * 100   // shows how much of tracked was within estimate
-   *     - red   = 100 - green                    // overdue part of tracked
-   *
-   * NOTE: container should have overflow:hidden; fills are positioned absolute.
-   ***************************************************************************/
-  function updateSubtaskBarsForContainer(container) {
-    if (!container) return;
-    // read data attrs (strings) -> floats
+  document.querySelectorAll(".progress-bar-container").forEach(container => {
     const estimated = parseFloat(container.dataset.estimated || 0);
     const tracked = parseFloat(container.dataset.tracked || 0);
+    const fill = container.querySelector(".progress-bar-fill");
 
-    const greenFill = container.querySelector(".progress-bar-fill");
-    const redFill = container.querySelector(".progress-bar-overdue");
+    if (!estimated || estimated <= 0) return;
 
-    if (!greenFill || !redFill) return;
+    // Calculate ratio
+    let ratio = (tracked / estimated) * 100;
 
-    // ensure consistent positioning
-    container.style.position = container.style.position || "relative";
-    greenFill.style.left = "0";
-    greenFill.style.transform = "none";
-    redFill.style.transform = "none";
-
-    // Reset
-    greenFill.style.width = "0%";
-    redFill.style.width = "0%";
-    redFill.style.left = "0%";
-
-    // No estimate case
-    if (!estimated || estimated <= 0) {
-      if (tracked > 0) {
-        // no estimate but tracked exists -> show whole bar as OVERDUE (red)
-        greenFill.style.width = "0%";
-        redFill.style.width = "100%";
-        redFill.style.left = "0%";
-      }
-      // update the time-info text (use hours as 'tracked / estimated' with fallback)
-      try {
-        const row = container.closest("[id^='subtask-']");
-        if (row) {
-          const info = row.querySelector(".time-info");
-          if (info) info.textContent = `${formatHoursToDHM(tracked)} tracked / ${formatHoursToDHM(estimated)} estimated`;
-        }
-      } catch (e) {}
-      return;
-    }
-
-    // Normal cases
-    if (tracked <= estimated) {
-      // progress towards estimate
-      const greenPercent = (tracked / estimated) * 100;
-      greenFill.style.width = `${greenPercent}%`;
-      redFill.style.width = "0%";
-      redFill.style.left = "0%";
+    if (ratio <= 100) {
+      fill.style.width = `${ratio}%`;
+      fill.classList.remove("bg-red-500");
+      fill.classList.add("bg-green-500");
     } else {
-      // tracked > estimated -> show composition of tracked
-      const greenPercent = (estimated / tracked) * 100; // how much of tracked was within estimate
-      const redPercent = Math.max(0, 100 - greenPercent); // remaining part (overdue)
-      // set green from start
-      greenFill.style.width = `${greenPercent}%`;
-      greenFill.style.left = "0%";
-      // set red starting right after green
-      redFill.style.left = `${greenPercent}%`;
-      redFill.style.width = `${redPercent}%`;
+      // Create red overlay when over limit
+      fill.style.width = "100%";
+      fill.classList.remove("bg-green-500");
+      fill.classList.add("bg-red-500");
     }
-
-    // update the time-info text under the bar
-    try {
-      const row = container.closest("[id^='subtask-']");
-      if (row) {
-        const info = row.querySelector(".time-info");
-        if (info) {
-          info.textContent = `${formatHoursToDHM(tracked)} tracked / ${formatHoursToDHM(estimated)} estimated`;
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  // Make the function globally available so other scripts (your AJAX handlers)
-  // can also call it directly (many of your handlers set dataset.tracked and call it).
-  window.updateSubtaskBarsForContainer = updateSubtaskBarsForContainer;
-
-  /***************************************************************************
-   * Initialize all progress bars on page load
-   ***************************************************************************/
-  document.querySelectorAll(".progress-bar-container").forEach(container => {
-    updateSubtaskBarsForContainer(container);
   });
-
-  /***************************************************************************
-   * (Optional) If you have AJAX code that sets `bar.dataset.tracked = ...`
-   * and calls updateSubtaskBarsForContainer(bar), this will work immediately.
-   *
-   * Example usage in your existing fetch success block (don't duplicate):
-   *
-   * const subtaskRow = document.getElementById(`subtask-${data.subtask_id}`);
-   * if (subtaskRow) {
-   *   const bar = subtaskRow.querySelector(".progress-bar-container");
-   *   if (bar) {
-   *     bar.dataset.tracked = data.time_tracked;
-   *     updateSubtaskBarsForContainer(bar);
-   *   }
-   * }
-   *
-   * Note: your existing code already does this — the important fix is the
-   * calculation function above which correctly computes green/red composition.
-   ***************************************************************************/
 });
 </script>
 
 
-
-<script>
-function convertToHours(timeStr) {
-      // Normalize input
-      timeStr = timeStr.toLowerCase().trim();
-
-      // Extract numbers for days, hours, minutes
-      const daysMatch = timeStr.match(/(\d+(?:\.\d+)?)d/);
-      const hoursMatch = timeStr.match(/(\d+(?:\.\d+)?)h/);
-      const minutesMatch = timeStr.match(/(\d+(?:\.\d+)?)m/);
-
-      const days = daysMatch ? parseFloat(daysMatch[1]) : 0;
-      const hours = hoursMatch ? parseFloat(hoursMatch[1]) : 0;
-      const minutes = minutesMatch ? parseFloat(minutesMatch[1]) : 0;
-
-      // Convert everything to hours
-      const totalHours = (days * 24) + hours + (minutes / 60);
-
-      return parseFloat(totalHours.toFixed(2)); // keep 2 decimal places
-  }
-
-  // Auto-convert before form submit
-  const form = document.querySelector("#timeTrackForm"); // your modal form
-  if (form) {
-      form.addEventListener("submit", function() {
-          const input = document.querySelector("#timeTrackedInput");
-          if (input && input.value) {
-              input.value = convertToHours(input.value);
-          }
-      });
-  }
-
-</script>
 
 
 </body>

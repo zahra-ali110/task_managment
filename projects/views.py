@@ -42,7 +42,7 @@ def projects(request, client_id=None):
 
             # redirect back to correct page
             if client:
-                return redirect('projects:projects', client_id=client.id)
+                return redirect('projects:projects_by_client', client_id=client.id)
             return redirect('projects:projects')
     else:
         form = ProjectForm()
@@ -209,7 +209,7 @@ def subtask_create(request, task_id):
             try:
                 deadline = datetime.strptime(deadline_str, "%Y-%m-%d").date()
                 delta = (deadline - date.today()).days
-                estimated_time = max(delta, 0)
+                estimated_time =  max(delta * 24, 0)  # ✅ Convert days → hours
             except ValueError:
                 deadline = None
 
@@ -275,6 +275,7 @@ def toggle_subtask_completion(request, subtask_id):
     subtask = get_object_or_404(SubTask, id=subtask_id)
 
     if subtask.status != "completed":
+        # ✅ Mark subtask as completed
         subtask.status = "completed"
         subtask.save()
 
@@ -282,17 +283,29 @@ def toggle_subtask_completion(request, subtask_id):
         task_completed = False
         epic_completed = False
 
+        # ✅ If all subtasks under this task are completed → mark task completed
         if not task.subtasks.filter(status__in=["pending", "in_progress"]).exists():
             task.status = "completed"
             task.save()
             task_completed = True
 
+            # ✅ If all tasks under this epic are completed → mark epic completed
             epic = task.epic
             if not epic.tasks.filter(status__in=["pending", "in_progress"]).exists():
                 epic.status = "completed"
                 epic.save()
                 epic_completed = True
 
+        # 🧩 Helper: convert hours → readable format (Xd Yh or Xh)
+        def format_time(hours):
+            hours = float(hours or 0)
+            if hours >= 24:
+                days = int(hours // 24)
+                hrs = int(hours % 24)
+                return f"{days}d {hrs}h" if hrs else f"{days}d"
+            return f"{int(hours)}h"
+
+        # ✅ Respond with JSON for frontend instant update
         return JsonResponse({
             "success": True,
             "subtask_id": subtask.id,
@@ -301,8 +314,15 @@ def toggle_subtask_completion(request, subtask_id):
             "task_completed": task_completed,
             "epic_id": task.epic.id,
             "epic_completed": epic_completed,
+
+            # ✅ Include time + display strings for progress bar update
+            "estimated": float(subtask.estimated_time or 0),
+            "tracked": float(subtask.time_tracked or 0),
+            "estimated_display": format_time(subtask.estimated_time or 0),
+            "tracked_display": format_time(subtask.time_tracked or 0),
         })
 
+    # ❌ Already completed → no changes
     return JsonResponse({"success": False, "error": "Already completed"})
 
 
@@ -476,3 +496,11 @@ def subtask_detail(request, pk):
         "epic": subtask.task.epic,
         "project": subtask.task.epic.project,
     })
+
+
+
+
+# ----------------- DASHBOARD -----------------
+@login_required
+def dashboard_view(request):
+    return render(request, "dashboard/dashboard.html", context)
