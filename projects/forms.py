@@ -49,52 +49,51 @@ class EpicForm(forms.ModelForm):
             "status": "Status",
             "assigned_users": "Assigned Users",
         }
+from django import forms
+from .models import Task
 
-
-# -------------------------
-# Task Form (unchanged)
-# -------------------------
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ["title", "description", "deadline", "priority", "status", "assigned_users"]
+        fields = ["title", "description", "priority", "status", "assigned_users", "start_time", "end_time"]
         widgets = {
-            "deadline": forms.DateInput(attrs={"type": "date"}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
             "assigned_users": forms.SelectMultiple(attrs={"class": "form-multiselect"}),
         }
-        labels = {
-            "title": "Task Title",
-            "description": "Task Description",
-            "deadline": "Deadline",
-            "priority": "Priority",
-            "status": "Status",
-            "assigned_users": "Assigned Users",
-        }
 
 
-# -------------------------
-# SubTask Form (UPDATED)
-# -------------------------
-# forms.py
+from django import forms
+from .models import SubTask
+
 class SubTaskForm(forms.ModelForm):
     class Meta:
         model = SubTask
-        fields = ["title", "description", "deadline", "priority", "status", "assigned_users", "estimated_time", "time_tracked"]
+        fields = [
+            "title",
+            "description",
+            "start_datetime",
+            "end_datetime",
+            "priority",
+            "status",
+            "assigned_users",
+            "time_tracked",
+        ]
         widgets = {
-            "deadline": forms.DateInput(attrs={"type": "date"}),
+            "start_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "end_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "assigned_users": forms.SelectMultiple(attrs={"class": "form-multiselect"}),
         }
         labels = {
             "title": "SubTask Title",
             "description": "SubTask Description",
-            "deadline": "Deadline",
+            "start_datetime": "Start Date & Time",
+            "end_datetime": "End Date & Time",
             "priority": "Priority",
             "status": "Status",
             "assigned_users": "Assigned Users",
-            "estimated_time": "Estimated Time (hrs)",
             "time_tracked": "Time Tracked (hrs)",
         }
-
 
 # -------------------------
 # Client Form (NEW)

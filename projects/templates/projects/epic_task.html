@@ -245,7 +245,11 @@
                     class="w-full border rounded-lg p-2 mb-2"></textarea>
 
                   <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="date" name="deadline" class="w-full border rounded-lg p-2">
+<div class="grid grid-cols-2 gap-2 mb-2">
+  <input type="datetime-local" name="start_time" class="w-full border rounded-lg p-2" placeholder="Start Time">
+  <input type="datetime-local" name="end_time" class="w-full border rounded-lg p-2" placeholder="End Time">
+</div>
+
                     <select name="priority" class="w-full border rounded-lg p-2">
                       <option value="low">Low</option>
                       <option value="medium" selected>Medium</option>
@@ -295,7 +299,8 @@
 
                   <p class="text-gray-600 text-sm">{{ task.description }}</p>
                   <p class="text-xs text-gray-500 flex items-center gap-2">
-                    <i class="fas fa-calendar-alt text-gray-400"></i> Deadline: {{ task.deadline|date:"d M Y" }}
+ <i class="fas fa-clock text-gray-400"></i> Estimated: {{ task.estimated_time_display }}
+
                     <span class="mx-1">|</span>
                     <i class="fas fa-tasks text-gray-400"></i> Status: {{ task.get_status_display }}
                     <span class="mx-1">|</span>
@@ -325,140 +330,134 @@
                   </button>
 
                   <!-- SubTask List -->
-                  <div class="mt-2 hidden subTaskContainer" id="subTask-{{ task.id }}">
-                    {% for subtask in task.subtasks.all %}
-                    <div
-                      class="subtask-item border p-2 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-4"
-                      id="subtask-{{ subtask.id }}" data-title="{{ subtask.title }}"
-                      data-description="{{ subtask.description }}" data-deadline="{{ subtask.deadline|date:'d M Y' }}"
-                      data-status="{% if subtask.status == 'completed' %}Completed{% else %}Pending{% endif %}"
-                      data-subtask-id="{{ subtask.id }}"
-                      data-assigned="{% for user in subtask.assigned_users.all %}{{ user.user.username }}{% if not forloop.last %},{% endif %}{% endfor %}">
-
-                      <!-- Left Side: Checkbox, title, users -->
-                      <div class="flex-1">
-                        <div class="flex items-center gap-2 text-sm">
-                          <input type="checkbox" class="subtask-checkbox toggleSubTaskCompletion"
-                          data-subtask-id="{{ subtask.id }}" {% if subtask.status == "completed" %}checked disabled{% endif %}>
-
-                          <span class="subtask-title" data-id="{{ subtask.id }}" data-title="{{ subtask.title }}"
-                            data-description="{{ subtask.description }}" data-deadline="{{ subtask.deadline }}"
-                            data-priority="{{ subtask.priority }}" data-status="{{ subtask.status }}"
-                            data-assigned="{% for u in subtask.assigned_users.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% endfor %}"
-                            data-time_estimated="{{ subtask.estimated_time_display|default:'1d' }}"
-                            data-time_tracked="{{ subtask.time_tracked }}">
-                            {{ subtask.title }}
-                          </span>
-                          
-  <!-- ✅ add this so JS can update status instantly -->
-  <span class="subtask-status text-gray-500"
-        data-id="{{ subtask.id }}">
-    {{ subtask.status }}
-  </span>
-                        </div>
-
-
-                        {% if subtask.assigned_users.exists %}
-                        <div class="ml-6 flex flex-wrap gap-1 mt-1">
-                          {% for user in subtask.assigned_users.all %}
-                          <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                            {{ user.user.username }}
-                          </span>
-                          {% endfor %}
-                        </div>
-                        {% else %}
-                        <p class="ml-6 text-xs text-gray-400 italic flex items-center gap-1">
-                          <i class="fas fa-user-slash text-gray-300"></i> No users assigned
-                        </p>
-                        {% endif %}
-                      </div>
-           <div class="mt-2 ml-6 w-[20%]">
+<div class="mt-2 hidden subTaskContainer" id="subTask-{{ task.id }}">
+  {% for subtask in task.subtasks.all %}
   <div
-    class="h-2 bg-gray-200 rounded-full overflow-hidden relative progress-bar-container"
+    class="subtask-item border p-2 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-4"
+    id="subtask-{{ subtask.id }}"
+    data-title="{{ subtask.title }}"
+    data-description="{{ subtask.description }}"
+    data-start="{{ subtask.start_datetime|date:'d M Y H:i' }}"
+    data-end="{{ subtask.end_datetime|date:'d M Y H:i' }}"
+    data-status="{% if subtask.status == 'completed' %}Completed{% else %}Pending{% endif %}"
     data-subtask-id="{{ subtask.id }}"
-    data-estimated="{{ subtask.estimated_time }}"
-    data-tracked="{{ subtask.time_tracked }}"
-  >
-    <!-- ✅ Green fill (on time) -->
-    <div class="h-2 bg-green-500 progress-bar-fill absolute left-0 top-0 transition-all duration-500 ease-out"></div>
+    data-assigned="{% for user in subtask.assigned_users.all %}{{ user.user.username }}{% if not forloop.last %},{% endif %}{% endfor %}">
 
-    <!-- ✅ Red fill (overdue portion) -->
-    <div class="h-2 bg-red-500 progress-bar-overdue absolute left-0 top-0 transition-all duration-500 ease-out"></div>
+    <!-- Left Side: Checkbox, title, users -->
+    <div class="flex-1">
+      <div class="flex items-center gap-2 text-sm">
+        <input type="checkbox" class="subtask-checkbox toggleSubTaskCompletion"
+          data-subtask-id="{{ subtask.id }}" {% if subtask.status == "completed" %}checked disabled{% endif %}>
+
+        <span class="subtask-title"
+          data-id="{{ subtask.id }}"
+          data-title="{{ subtask.title }}"
+          data-description="{{ subtask.description }}"
+          data-start="{{ subtask.start_datetime }}"
+          data-end="{{ subtask.end_datetime }}"
+          data-priority="{{ subtask.priority }}"
+          data-status="{{ subtask.status }}"
+          data-assigned="{% for u in subtask.assigned_users.all %}{{ u }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+          data-time_estimated="{{ subtask.estimated_time_display|default:'1d' }}"
+          data-time_tracked="{{ subtask.time_tracked }}">
+          {{ subtask.title }}
+        </span>
+
+        <!-- ✅ add this so JS can update status instantly -->
+        <span class="subtask-status text-gray-500" data-id="{{ subtask.id }}">
+          {{ subtask.status }}
+        </span>
+      </div>
+
+      {% if subtask.assigned_users.exists %}
+      <div class="ml-6 flex flex-wrap gap-1 mt-1">
+        {% for user in subtask.assigned_users.all %}
+        <span class="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+          {{ user.user.username }}
+        </span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="ml-6 text-xs text-gray-400 italic flex items-center gap-1">
+        <i class="fas fa-user-slash text-gray-300"></i> No users assigned
+      </p>
+      {% endif %}
+    </div>
+
+    <div class="mt-2 ml-6 w-[20%]">
+      <div
+        class="h-2 bg-gray-200 rounded-full overflow-hidden relative progress-bar-container"
+        data-subtask-id="{{ subtask.id }}"
+        data-estimated="{{ subtask.estimated_time }}"
+        data-tracked="{{ subtask.time_tracked }}"
+      >
+        <div class="h-2 bg-green-500 progress-bar-fill absolute left-0 top-0 transition-all duration-500 ease-out"></div>
+        <div class="h-2 bg-red-500 progress-bar-overdue absolute left-0 top-0 transition-all duration-500 ease-out"></div>
+      </div>
+
+      <div class="text-xs text-gray-500 mt-1 time-info">
+        {{ subtask.time_tracked_display }} tracked / {{ subtask.estimated_time_display }} estimated
+      </div>
+    </div>
   </div>
+  {% empty %}
+  <p class="text-gray-400 text-xs">No SubTasks</p>
+  {% endfor %}
 
-  <!-- ✅ Display time info -->
-  <div class="text-xs text-gray-500 mt-1 time-info">
-    {{ subtask.time_tracked_display }} tracked / {{ subtask.estimated_time_display }} estimated
+  <!-- Add SubTask Button & Form -->
+  <div class="mt-2">
+    <button class="px-2 py-1 text-xs bg-primary text-white rounded-lg toggleAddSubTaskBtn"
+      data-task="{{ task.id }}">
+      <i class="fas fa-plus mr-1"></i> Add SubTask
+    </button>
+
+    <div class="mt-2 hidden addSubTaskFormContainer" id="addSubTaskForm-{{ task.id }}">
+      <form method="POST" action="{% url 'projects:subtask_create' task.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="pending">
+
+        <input type="text" name="title" placeholder="SubTask Title"
+          class="w-full border rounded-lg p-2 mb-2" required>
+
+        <textarea name="description" placeholder="SubTask Description"
+          class="w-full border rounded-lg p-2 mb-2"></textarea>
+
+        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+        <select name="priority" class="w-full border rounded-lg p-2 mb-3">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+
+        <!-- ✅ Replaced old deadline fields -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date & Time</label>
+        <input type="datetime-local" name="start_datetime" class="w-full border rounded-lg p-2 mb-3">
+
+        <label class="block text-sm font-medium text-gray-700 mb-1">End Date & Time</label>
+        <input type="datetime-local" name="end_datetime" class="w-full border rounded-lg p-2 mb-3">
+
+        <!-- ✅ Removed old "Deadline" field completely -->
+
+        <label class="block text-sm font-medium text-gray-700 mb-1">Assign Users</label>
+        <select name="assigned_users" multiple
+          class="w-full border rounded-lg p-2 mb-3 form-multiselect">
+          {% for profile in profiles %}
+          <option value="{{ profile.id }}">{{ profile.user.username }}</option>
+          {% endfor %}
+        </select>
+
+        <div class="flex justify-end gap-2">
+          <button type="button"
+            class="cancelSubTaskFormBtn px-2 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+            data-task="{{ task.id }}">Cancel</button>
+          <button type="submit"
+            class="px-2 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
-
-
-                    </div>
-                    {% empty %}
-                    <p class="text-gray-400 text-xs">No SubTasks</p>
-                    {% endfor %}
-
-                    <!-- Add SubTask Button & Form -->
-                    <div class="mt-2">
-                      <button class="px-2 py-1 text-xs bg-primary text-white rounded-lg toggleAddSubTaskBtn"
-                        data-task="{{ task.id }}">
-                        <i class="fas fa-plus mr-1"></i> Add SubTask
-                      </button>
-
-                      <div class="mt-2 hidden addSubTaskFormContainer" id="addSubTaskForm-{{ task.id }}">
-                        <form method="POST" action="{% url 'projects:subtask_create' task.id %}">
-                          {% csrf_token %}
-
-                          <!-- Hidden Status -->
-                          <input type="hidden" name="status" value="pending">
-
-                          <!-- Title -->
-                          <input type="text" name="title" placeholder="SubTask Title"
-                            class="w-full border rounded-lg p-2 mb-2" required>
-
-                          <!-- Description -->
-                          <textarea name="description" placeholder="SubTask Description"
-                            class="w-full border rounded-lg p-2 mb-2"></textarea>
-
-                          <!-- Priority -->
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                          <select name="priority" class="w-full border rounded-lg p-2 mb-3">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                          </select>
-
-                          <!-- Deadline -->
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                          <input type="date" name="deadline" class="w-full border rounded-lg p-2 mb-3">
-
-
-                          <!-- Assigned Users -->
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Assign Users</label>
-                          <select name="assigned_users" multiple
-                            class="w-full border rounded-lg p-2 mb-3 form-multiselect">
-                            {% for profile in profiles %}
-                            <option value="{{ profile.id }}">{{ profile.user.username }}</option>
-                            {% endfor %}
-                          </select>
-
-                          <!-- Buttons -->
-                          <div class="flex justify-end gap-2">
-                            <button type="button"
-                              class="cancelSubTaskFormBtn px-2 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
-                              data-task="{{ task.id }}">Cancel</button>
-                            <button type="submit"
-                              class="px-2 py-1 bg-primary text-white rounded-lg hover:bg-secondary">Save</button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-
-                    <!-- Time Track Modal -->
-                    
-                    <!-- End Add SubTask -->
-                  </div>
 
 
 
@@ -658,10 +657,11 @@
 
       <!-- ✅ Time Estimated -->
       <p class="flex items-center gap-2">
-        <i class="fas fa-clock text-orange-500"></i>
-        <span class="font-semibold">Time Estimated:</span>
-<span id="sidebarEstimatedTime">{{ subtask.estimated_time_display }}</span>
-      </p>
+  <i class="fas fa-clock text-orange-500"></i>
+  <span class="font-semibold">Time Estimated:</span>
+  <span id="sidebarEstimated">—</span>
+</p>
+
 
       <!-- ✅ Subtask Time Tracked -->
       <p class="flex items-center gap-2">
@@ -679,7 +679,8 @@
 
   <!-- Overlay -->
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
-<script>
+
+ <script>
 document.addEventListener("DOMContentLoaded", () => {
   // ---------- New helpers: parse & format ------------
 
@@ -988,25 +989,20 @@ function openSidebar(data) {
     });
   }
 
-  // ✅ Fixed: Use formatted display ("25d" or "12h") instead of recalculating hours
-  const sidebarEstimated = document.getElementById("sidebarEstimatedTime");
-  if (sidebarEstimated) {
-    let estimatedDisplay = data.time_estimated;
+ // ✅ Convert hours → readable format like "1d 4h 30m"
+function formatHoursToDHM(hours) {
+  const totalMinutes = Math.round(hours * 60);
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hoursLeft = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutesLeft = totalMinutes % 60;
 
-    // if the dataset has numeric hours, convert them properly
-    if (estimatedDisplay && !isNaN(estimatedDisplay)) {
-      const hours = parseFloat(estimatedDisplay);
-      if (hours >= 24) {
-        const days = Math.floor(hours / 24);
-        const hrs = Math.floor(hours % 24);
-        estimatedDisplay = hrs > 0 ? `${days}d ${hrs}h` : `${days}d`;
-      } else {
-        estimatedDisplay = `${Math.floor(hours)}h`;
-      }
-    }
-
-    sidebarEstimated.textContent = estimatedDisplay || "—";
-  }
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hoursLeft) parts.push(`${hoursLeft}h`);
+  if (minutesLeft) parts.push(`${minutesLeft}m`);
+  if (parts.length === 0) parts.push("0h");
+  return parts.join(" ");
+}
 
   const sidebarTrackedElement = document.getElementById("sidebarTimeTracked");
   if (sidebarTrackedElement) {

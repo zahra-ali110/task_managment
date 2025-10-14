@@ -151,11 +151,35 @@ def project_detail(request, pk):
         "profiles": profiles,
         "progress": progress,   # ✅ send to template
     })
+# --------------------------------------------------
+# TASK CREATE (final fixed version — calculates estimated_time)
+# --------------------------------------------------
+from datetime import datetime, time
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from accounts.models import Profile
+from .models import Epic, Task
 
 
-# --------------------------------------------------
-# TASK CREATE
-# --------------------------------------------------
+def parse_datetime_local(value):
+    """Safely parse datetime-local string (from HTML input) into a time object."""
+    if not value:
+        return None
+    try:
+        # Handles both '2025-10-14T10:30' and '10:30'
+        if "T" in value:
+            return datetime.fromisoformat(value).time()
+        return time.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import datetime
+from accounts.models import Profile
+from projects.models import Epic, Task
+
 @login_required
 def task_create(request, epic_id):
     epic = get_object_or_404(Epic, id=epic_id)
@@ -163,34 +187,59 @@ def task_create(request, epic_id):
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description")
-        deadline = request.POST.get("deadline")
-        status = request.POST.get("status")
-        priority = request.POST.get("priority")
+        priority = request.POST.get("priority") or "medium"
+        status = request.POST.get("status") or "pending"
         assigned_users_ids = request.POST.getlist("assigned_users")
 
-        if title:  # ✅ only save if there's a title
-            task = Task.objects.create(
-                epic=epic,
-                title=title,
-                description=description,
-                deadline=deadline if deadline else None,
-                status=status,
-                priority=priority if priority else "medium",
-            )
+        # --------------------------
+        # Parse datetime-local inputs
+        # --------------------------
+        start_dt_raw = request.POST.get("start_time")  # format: "YYYY-MM-DDTHH:MM"
+        end_dt_raw = request.POST.get("end_time")      # format: "YYYY-MM-DDTHH:MM"
 
-            if assigned_users_ids:
-                profiles = Profile.objects.filter(id__in=assigned_users_ids)
-                task.assigned_users.set(profiles)
+        start_dt = datetime.strptime(start_dt_raw, "%Y-%m-%dT%H:%M") if start_dt_raw else None
+        end_dt = datetime.strptime(end_dt_raw, "%Y-%m-%dT%H:%M") if end_dt_raw else None
 
-            # ✅ Redirect back to project detail, open this task
-            return redirect(f"/projects/{epic.project.id}/#task-{task.id}")
+        # Split into date and time for model fields
+        start_date = start_dt.date() if start_dt else None
+        start_time = start_dt.time() if start_dt else None
+        end_date = end_dt.date() if end_dt else None
+        end_time = end_dt.time() if end_dt else None
 
+        # --------------------------
+        # Create Task instance
+        # --------------------------
+        task = Task(
+            epic=epic,
+            title=title,
+            description=description,
+            priority=priority,
+            status=status,
+            start_date=start_date,
+            start_time=start_time,
+            end_date=end_date,
+            end_time=end_time,
+        )
+        task.save()  # triggers model.save() → calculates estimated_time
+
+        # --------------------------
+        # Assign users (if any)
+        # --------------------------
+        if assigned_users_ids:
+            profiles = Profile.objects.filter(id__in=assigned_users_ids)
+            task.assigned_users.set(profiles)
+
+        # Redirect to the project page and scroll to the new task
+        return redirect(f"/projects/{epic.project.id}/#task-{task.id}")
+
+    # Fallback redirect if not POST
     return redirect(f"/projects/{epic.project.id}/")
 
-
-# --------------------------------------------------
 # SUBTASK CREATE
-# --------------------------------------------------
+# --------------------------------------------------# views.py
+# projects/views.py (only the subtask_create function)
+from decimal import Decimal
+
 @login_required
 def subtask_create(request, task_id):
     task = get_object_or_404(Task, id=task_id)
@@ -198,27 +247,36 @@ def subtask_create(request, task_id):
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description")
-        deadline_str = request.POST.get("deadline")
+        start_str = request.POST.get("start_datetime")
+        end_str = request.POST.get("end_datetime")
         priority = request.POST.get("priority", "medium")
         assigned_users_ids = request.POST.getlist("assigned_users")
 
-        deadline = None
-        estimated_time = 0
+        start_dt = None
+        end_dt = None
+        estimated_time = Decimal("0.00")
 
-        if deadline_str:
+        # Parse datetimes from datetime-local (format: YYYY-MM-DDTHH:MM)
+        if start_str and end_str:
             try:
-                deadline = datetime.strptime(deadline_str, "%Y-%m-%d").date()
-                delta = (deadline - date.today()).days
-                estimated_time =  max(delta * 24, 0)  # ✅ Convert days → hours
+                start_dt = datetime.strptime(start_str, "%Y-%m-%dT%H:%M")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%dT%H:%M")
+                delta = end_dt - start_dt
+                if delta.total_seconds() > 0:
+                    estimated_time = Decimal(delta.total_seconds() / 3600).quantize(Decimal("0.01"))
+                else:
+                    estimated_time = Decimal("0.00")
             except ValueError:
-                deadline = None
+                start_dt = None
+                end_dt = None
 
-        if title:  # ✅ only save if there's a title
+        if title:
             subtask = SubTask.objects.create(
                 task=task,
                 title=title,
                 description=description,
-                deadline=deadline,
+                start_datetime=start_dt,
+                end_datetime=end_dt,
                 priority=priority,
                 status="pending",
                 estimated_time=estimated_time,
@@ -228,11 +286,10 @@ def subtask_create(request, task_id):
                 profiles = Profile.objects.filter(id__in=assigned_users_ids)
                 subtask.assigned_users.set(profiles)
 
-            # ✅ Redirect back to project detail, open this subtask’s parent task
             return redirect(f"/projects/{task.epic.project.id}/#subtask-{subtask.id}")
 
     return redirect(f"/projects/{task.epic.project.id}/#task-{task.id}")
-# --------------------------------------------------
+
 # CLIENT VIEWS
 # --------------------------------------------------
 @login_required
@@ -275,28 +332,28 @@ def toggle_subtask_completion(request, subtask_id):
     subtask = get_object_or_404(SubTask, id=subtask_id)
 
     if subtask.status != "completed":
-        # ✅ Mark subtask as completed
         subtask.status = "completed"
         subtask.save()
+
+        # ✅ Update parent Task's tracked_time after subtask completion
+        subtask.task.update_tracked_time()
 
         task = subtask.task
         task_completed = False
         epic_completed = False
 
-        # ✅ If all subtasks under this task are completed → mark task completed
         if not task.subtasks.filter(status__in=["pending", "in_progress"]).exists():
             task.status = "completed"
             task.save()
             task_completed = True
 
-            # ✅ If all tasks under this epic are completed → mark epic completed
             epic = task.epic
             if not epic.tasks.filter(status__in=["pending", "in_progress"]).exists():
                 epic.status = "completed"
                 epic.save()
                 epic_completed = True
 
-        # 🧩 Helper: convert hours → readable format (Xd Yh or Xh)
+        # helper to format hours
         def format_time(hours):
             hours = float(hours or 0)
             if hours >= 24:
@@ -305,7 +362,6 @@ def toggle_subtask_completion(request, subtask_id):
                 return f"{days}d {hrs}h" if hrs else f"{days}d"
             return f"{int(hours)}h"
 
-        # ✅ Respond with JSON for frontend instant update
         return JsonResponse({
             "success": True,
             "subtask_id": subtask.id,
@@ -314,22 +370,16 @@ def toggle_subtask_completion(request, subtask_id):
             "task_completed": task_completed,
             "epic_id": task.epic.id,
             "epic_completed": epic_completed,
-
-            # ✅ Include time + display strings for progress bar update
-            "estimated": float(subtask.estimated_time or 0),
-            "tracked": float(subtask.time_tracked or 0),
-            "estimated_display": format_time(subtask.estimated_time or 0),
-            "tracked_display": format_time(subtask.time_tracked or 0),
+            "tracked": float(task.tracked_time),             # ✅ aggregated tracked time
+            "tracked_display": format_time(task.tracked_time),
         })
 
-    # ❌ Already completed → no changes
     return JsonResponse({"success": False, "error": "Already completed"})
 
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from decimal import Decimal, InvalidOperation
-
 @login_required
 @require_POST
 def track_time(request, subtask_id):
@@ -344,6 +394,9 @@ def track_time(request, subtask_id):
     subtask.time_tracked = (subtask.time_tracked or Decimal('0')) + hours
     subtask.status = "completed"
     subtask.save()
+
+    # ✅ Update parent Task's tracked_time
+    subtask.task.update_tracked_time()
 
     # propagate completion up the chain if appropriate
     task = subtask.task
@@ -363,7 +416,8 @@ def track_time(request, subtask_id):
     return JsonResponse({
         "success": True,
         "subtask_id": subtask.id,
-        "time_tracked": float(subtask.time_tracked),   # primitive type for JS
+        "time_tracked": float(subtask.time_tracked),
+        "task_tracked_time": float(task.tracked_time),  # ✅ send aggregated tracked time
         "status": subtask.status,
         "task_id": task.id,
         "task_completed": task_completed,
@@ -395,14 +449,13 @@ def complete_subtask(request, subtask_id):
 
 
  
-
 @login_required
 @require_POST
 def toggle_task_completion(request, task_id):
     task = get_object_or_404(Task, id=task_id)
 
     if task.status != "completed":
-        # ✅ only allow marking complete if all subtasks are done
+        # only allow marking complete if all subtasks are done
         if task.subtasks.filter(status__in=["pending", "in_progress"]).exists():
             return JsonResponse({"success": False, "error": "Complete all subtasks first"})
 
@@ -410,7 +463,6 @@ def toggle_task_completion(request, task_id):
         task.save()
 
         epic = task.epic
-        # ✅ check if all tasks of this epic are completed
         if epic.tasks.filter(status__in=["pending", "in_progress"]).count() == 0:
             epic.status = "completed"
             epic.save()
@@ -422,8 +474,6 @@ def toggle_task_completion(request, task_id):
         })
 
     return JsonResponse({"success": False, "error": "Already completed"})
-
-
 
 @login_required
 @require_POST
